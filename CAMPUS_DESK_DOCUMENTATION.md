@@ -1,200 +1,133 @@
-# CampusDesk — Complete Project Architecture & Documentation
+# CampusDesk architecture and data reference
 
-## Executive Overview
-**CampusDesk** (Student Management System) is a multi-tier academic management web application built on **Node.js, Express, MongoDB (Mongoose), and EJS**. It supports role-based access control (RBAC) across three distinct roles: **Administrators** (Super Admin & College Admin), **Teachers**, and **Students**, alongside a public **University & College Directory**.
+This guide describes behavior implemented in the current source. CampusDesk is a server-rendered academic-management application with a public university directory, authenticated role portals, a small JSON API, and Socket.IO chat/notifications.
 
----
+## Architecture
 
-## 1. Backend Scripts & Configuration
-
-### Directory Layout & Script Roles
-
-| File / Script | Category | Purpose & Description |
-| :--- | :--- | :--- |
-| `server.js` | Core Entry Point | Configures Express server, session storage (`express-session` with `sms.sid`), middleware pipelines, flash messages, static asset paths, view engines, and top-level route orchestration. Connects to MongoDB on start and binds to `0.0.0.0:8000`. |
-| `config/db.js` | Database Config | Handles Mongoose connection pooling via `process.env.MONGO_URI` with fallback to `mongodb://127.0.0.1:27017/student_management`. |
-| `middleware/auth.js` | Security / RBAC | Enforces authentication and authorization barriers: `requireAuth`, `requireAdmin`, `requireSuperAdmin`, `requireTeacher`, and `requireStudent`. Handles automated redirection to login for unauthenticated requests. |
-| `middleware/flash.js` | View State Middleware | Pulls one-time session flash notifications and binds `currentUser` and `flash` directly to `res.locals` for seamless EJS rendering. |
-| `scripts/seed.js` | Data Population | Idempotent database seeder. Populates 10 verified Indian universities (Delhi, BHU, JNU, Jamia, AMU, Mumbai, Calcutta, Allahabad, IGNOU, Hyderabad), sample departments, courses, semester subjects, default admin accounts, and demo teachers/students. |
-| `scripts/reset-admin-password.js` | Maintenance Utility | Explicit script to update the password hash of the configured administrative account (`ADMIN_EMAIL`) using bcrypt (`rounds: 10`). |
-
-### NPM Scripts
-
-- `npm run dev`: Runs the application in development mode with live reloading via `nodemon server.js`.
-- `npm start`: Starts production Node server (`node server.js`).
-- `npm run db:seed`: Executes `scripts/seed.js` to seed or update default records idempotently.
-- `npm run admin:reset-password`: Resets the admin password directly using environment variable credentials.
-
----
-
-## 2. Frontend Routes & Endpoints
-
-CampusDesk utilizes server-side rendered (SSR) EJS views with session authentication, coupled with selective REST API endpoints for dynamic frontend dropdown population.
-
-### Public & Authentication Routes (`routes/auth.js` & `server.js`)
-
-| Method | Endpoint | Access | Functionality |
-| :--- | :--- | :--- | :--- |
-| `GET` | `/` | Public | Root redirector: sends logged-in users to `/admin`, `/teacher`, or `/student` dashboard; unauthenticated users to `home.ejs`. |
-| `GET` | `/health` | Public | Returns JSON health state (`{ status: "ok", database: "connected" }`). |
-| `GET` | `/login` | Public | Renders combined login interface for students and teachers. |
-| `POST` | `/login` | Public | Authenticates student or teacher via email & bcrypt password check; establishes session. |
-| `GET` | `/admin/login` | Public | Dedicated administrator sign-in page. |
-| `POST` | `/admin/login` | Public | Validates admin credentials against `AdminLogin` collection. |
-| `GET` | `/signup` | Public | Multi-step self-registration with in-memory simulated OTP (5-minute expiry). |
-| `POST` | `/signup` | Public | Validates student/teacher registration payload, confirms OTP, creates login credentials, and auto-logs in. |
-| `POST` | `/logout` | Authenticated | Destroys current session and redirects to `/`. |
-
-### University Directory Routes (`routes/colleges.js`)
-
-| Method | Endpoint | Access | Functionality |
-| :--- | :--- | :--- | :--- |
-| `GET` | `/colleges` | Public | Browsable college/university directory with search, state filtering, and pagination. |
-| `GET` | `/colleges/:slug` | Public | University detail page displaying verified departments, academic programs, and source citations. |
-
-### Administrator Routes (`routes/admin.js`)
-
-Requires `requireAuth` + `requireAdmin`. Certain sub-routes require `requireSuperAdmin`.
-
-| Method | Endpoint | Scope | Functionality |
-| :--- | :--- | :--- | :--- |
-| `GET` | `/admin` | Admin | Main dashboard showing key statistics (student, teacher, college counts) and audit logs. |
-| `GET` / `POST` | `/admin/students` | Admin | List active students / Create new student with initial enrollment details. |
-| `GET` | `/admin/students/new` | Admin | Form to register a new student. |
-| `GET` / `POST` | `/admin/students/:id/update` | Admin | View/edit student record and academic status. |
-| `POST` | `/admin/students/:id/archive` | Admin | Soft-deletes (archives) a student and disables their login account. |
-| `GET` / `POST` | `/admin/teachers` | Admin | List teachers / Create new faculty profile and login credentials. |
-| `GET` | `/admin/teachers/new` | Admin | Form to add faculty. |
-| `GET` / `POST` | `/admin/teachers/:id/update` | Admin | View/edit faculty profile, department assignment, and skills. |
-| `POST` | `/admin/teachers/:id/archive` | Admin | Soft-deletes a teacher and revokes login access. |
-| `GET` / `POST` | `/admin/colleges` | Admin | View affiliated colleges / Register new college under an existing university. |
-| `POST` | `/admin/colleges/:id/update` | Admin | Edit college details. |
-| `POST` | `/admin/colleges/:id/archive` | Admin | Soft-deletes college record. |
-| `GET` / `POST` | `/admin/departments` | Admin | Manage departments associated with colleges. |
-| `POST` | `/admin/departments/:id/update`| Admin | Update department information. |
-| `POST` | `/admin/departments/:id/archive`| Admin | Soft-deletes department record. |
-| `GET` / `POST` | `/admin/courses` | Admin | Manage academic courses (degree programs, durations, fees). |
-| `POST` | `/admin/courses/:id/update` | Admin | Update course metadata. |
-| `POST` | `/admin/courses/:id/archive` | Admin | Soft-deletes course. |
-| `GET` / `POST` | `/admin/subjects` | Admin | Manage subjects, credit values, and subject types (Credit vs Non-Credit). |
-| `GET` | `/admin/academic-structure` | Admin | Interface for mapping Courses ➔ Semesters ➔ Subjects. |
-| `POST` | `/admin/academic-structure/*` | Admin | Creates links for College-Courses, Semesters, and Semester-Subjects. |
-| `GET` / `POST` | `/admin/assignments` | Admin | View and allocate teachers to semester subjects. |
-| `POST` | `/admin/assignments/:id/status`| Admin | Approve or reject faculty teaching assignments. |
-| `GET` | `/admin/reports` | Admin | Institutional data summaries, audit logs, and exportable reports. |
-| `GET` / `POST` | `/admin/admins` | Super Admin | Manage administrative accounts and role assignments (`SUPER_ADMIN` vs `COLLEGE_ADMIN`). |
-
-### Dynamic Admin API (`routes/admin-api.js`)
-
-| Method | Endpoint | Purpose |
-| :--- | :--- | :--- |
-| `GET` | `/admin/api/colleges/:id/departments` | JSON API: Dynamic department lookup for selected college. |
-| `GET` | `/admin/api/colleges/:id/courses` | JSON API: Dynamic course list for selected college. |
-| `GET` | `/admin/api/courses/:id/semesters` | JSON API: Semester list for selected college-course link. |
-| `GET` | `/admin/api/semesters/:id/subjects` | JSON API: Subject list for selected semester. |
-
-### Student Portal (`routes/student.js`)
-
-Requires `requireAuth` + `requireStudent`.
-
-| Method | Endpoint | Functionality |
-| :--- | :--- | :--- |
-| `GET` | `/student` | Student personal dashboard showing enrolled course, active semester, registered subjects, and assigned mentors/teachers. |
-| `POST` | `/student/profile` | Updates personal profile details (phone, avatar URL). |
-
-### Teacher Portal (`routes/teacher.js`)
-
-Requires `requireAuth` + `requireTeacher`.
-
-| Method | Endpoint | Functionality |
-| :--- | :--- | :--- |
-| `GET` | `/teacher` | Teacher dashboard showing approved subject teaching assignments, assigned student cohorts, and department details. |
-| `POST` | `/teacher/profile` | Updates faculty profile, bio, and technical skills. |
-
----
-
-## 3. Database Schema (Mongoose Models)
-
-All 18 schemas are centrally declared in `models/index.js` using Mongoose:
-
-```mermaid
-erDiagram
-    University ||--o{ College : "has"
-    College ||--o{ Department : "contains"
-    College ||--o{ CollegeCourse : "offers"
-    Course ||--o{ CollegeCourse : "mapped in"
-    Department ||--o{ Course : "administers"
-    CollegeCourse ||--o{ Semester : "structured into"
-    Semester ||--o{ SemesterSubject : "includes"
-    Subject ||--o{ SemesterSubject : "placed in"
-    
-    Student ||--o| StudentLogin : "credentials"
-    Teacher ||--o| TeacherLogin : "credentials"
-    Admin ||--o| AdminLogin : "credentials"
-    
-    Student }o--|| CollegeCourse : "enrolled in"
-    Student }o--o| Teacher : "mentored by"
-    
-    Teacher ||--o{ TeachingAssignment : "assigned"
-    SemesterSubject ||--o{ TeachingAssignment : "taught in"
-    Student ||--o{ Enrollment : "takes"
-    SemesterSubject ||--o{ Enrollment : "contains"
+```text
+Browser
+  ├─ HTML forms / same-origin fetch ──> Express routes ──> Mongoose ──> MongoDB
+  ├─ EJS HTML <─────────────────────── Express views
+  ├─ Static CSS / JavaScript <──────── Express public/
+  └─ Socket.IO <────────────────────── shared HTTP server
+                                      └─ shared Express session middleware
 ```
 
-### Data Dictionary & Model Specifications
+`server.js` creates the Express application and HTTP server, configures EJS, body parsers, static assets, NoSQL-key sanitization/security headers, sessions and flash messages, initializes Socket.IO, mounts routes, and connects to MongoDB before listening. The route/service/model layers are separated as follows:
 
-#### 1. `University`
-- **Fields**: `name` (String, unique), `slug` (String, unique), `officialWebsite`, `city`, `state`, `description`, `publicPhone`, `publicEmail`, `logoUrl`, `campusImageUrl`, `sources` (Array of Strings), `departments` (`[{ name, sourceUrl }]`), `programs` (`[{ name, sourceUrl }]`).
-- **Purpose**: Stores verified public university directory data.
+| Layer | Main responsibilities |
+| --- | --- |
+| `routes/` | Request handling, validation, authorization, model queries, and response selection |
+| `middleware/` | Session role checks, API token/session checks, flash locals, request sanitization, and auth rate limiting |
+| `models/index.js` | MongoDB document schemas, references, enums, indexes, and timestamps |
+| `services/` | Socket.IO authentication/events and PDF/XLSX construction |
+| `views/` | Server-rendered public and role-specific pages |
+| `public/` | Styles and browser behavior |
+| `scripts/` | Idempotent data seed and explicit admin password reset |
+| `tests/` | Supertest/service assertions and Playwright browser checks |
 
-#### 2. `College`
-- **Fields**: `universityId` (Ref: `University`), `name`, `city`, `state`, `website`, `phone`, `email`, `archivedAt` (Date).
-- **Index**: Compound unique on `{ universityId: 1, name: 1 }`.
+Express mounts auth, chat, and notification routes at `/`; the directory at `/colleges`; admin pages at `/admin`; admin JSON handlers at `/api/admin`; and portals at `/student` and `/teacher`.
 
-#### 3. `Department`
-- **Fields**: `collegeId` (Ref: `College`), `name`, `description`, `archivedAt` (Date).
-- **Index**: Compound unique on `{ collegeId: 1, name: 1 }`.
+## Roles and access
 
-#### 4. `Course`
-- **Fields**: `name` (String, unique), `code` (String, uppercase), `durationYears` (Number), `totalFee` (Number), `description`, `departmentId` (Ref: `Department`), `archivedAt` (Date).
+- `STUDENT`: own portal, enrollment, own attendance/assignments/grades/fees, and eligible chat contacts.
+- `TEACHER`: own portal, approved teaching subjects, attendance recording, assignment creation/submission grading, grades, roster, announcements, and eligible chat contacts.
+- `ADMIN`: administrative pages and management operations.
+- Admin profiles have a separate `adminRole`: `SUPER_ADMIN` or `COLLEGE_ADMIN`. College admins are scoped to an assigned college on supported operations. Super admins manage global catalogue data, admin accounts, academic structure, and academic sessions.
 
-#### 5. `CollegeCourse`
-- **Fields**: `collegeId` (Ref: `College`), `courseId` (Ref: `Course`).
-- **Index**: Compound unique on `{ collegeId: 1, courseId: 1 }`.
+Web pages use the `sms.sid` express-session cookie. The cookie is HTTP-only, `SameSite=Lax`, secure in production, and lasts eight hours. Sessions are regenerated on successful web sign-in. JSON endpoints protected by `requireApiAuth` accept the session or a bearer JWT; tokens expire after seven days. `requireApiAuth` returns JSON `401` responses, while page authorization redirects or renders an HTML access-denied page.
 
-#### 6. `Semester`
-- **Fields**: `collegeCourseId` (Ref: `CollegeCourse`), `semesterNo` (Number, min: 1).
-- **Index**: Compound unique on `{ collegeCourseId: 1, semesterNo: 1 }`.
+Student, teacher, and admin profile documents are separate from their login documents. Login passwords are stored as bcrypt hashes. Login attempts are recorded in `LoginActivity`; admin changes are recorded in `ManagementActivity`.
 
-#### 7. `Subject`
-- **Fields**: `code` (String, unique, uppercase), `name` (String), `credits` (Number), `subjectType` (Enum: `CREDIT`, `NON_CREDIT`).
+## Data models and relationships
 
-#### 8. `SemesterSubject`
-- **Fields**: `semesterId` (Ref: `Semester`), `subjectId` (Ref: `Subject`).
-- **Index**: Compound unique on `{ semesterId: 1, subjectId: 1 }`.
+The following 29 Mongoose models are exported from `models/index.js`. Schemas use timestamps. Fields listed here are the key fields/links, not an exhaustive listing of every optional property.
 
-#### 9. `Student` & `StudentLogin`
-- **Student**: `name`, `email` (unique), `studentId` (unique), `phone` (unique sparse), `collegeCourseId` (Ref: `CollegeCourse`), `departmentId` (Ref: `Department`), `semesterNo`, `academicYear`, `enrollmentDate`, `profileImageUrl`, `teacherId` (Ref: `Teacher`), `status` (`ACTIVE`, `INACTIVE`, `SUSPENDED`), `archivedAt`.
-- **StudentLogin**: `studentId` (Ref: `Student`, unique), `username` (unique), `passwordHash`, `status` (`ACTIVE`, `DISABLED`).
+### Institution and academic catalogue
 
-#### 10. `Teacher` & `TeacherLogin`
-- **Teacher**: `name`, `email` (unique), `employeeId` (unique), `phone` (unique sparse), `departmentId` (Ref: `Department`), `designation`, `skills` ([String]), `status`, `archivedAt`.
-- **TeacherLogin**: `teacherId` (Ref: `Teacher`, unique), `username` (unique), `passwordHash`, `status`.
+| Model | Main fields / references |
+| --- | --- |
+| `University` | Unique name; slug, official website, location/contact, description, image/logo URLs, source URLs, nested sourced departments and programs. Public directory records are distinct from managed colleges. |
+| `College` | Required `universityId` reference, name, location/contact, `archivedAt`; unique per university/name. |
+| `Department` | Required `collegeId`, name, description, `archivedAt`; unique per college/name. |
+| `Course` | Unique name, optional unique code, duration, total fee, description, optional `departmentId`, `archivedAt`. |
+| `CollegeCourse` | Join between `College` and `Course`; unique college/course pair. |
+| `Semester` | `collegeCourseId`, `semesterNo`; unique per college-course/semester number. |
+| `Subject` | Unique uppercase code, name, credits, `CREDIT` or `NON_CREDIT`. |
+| `SemesterSubject` | Join between `Semester` and `Subject`; unique semester/subject pair. |
 
-#### 11. `Admin` & `AdminLogin`
-- **Admin**: `name`, `email` (unique), `collegeId` (Ref: `College`), `role` (Enum: `SUPER_ADMIN`, `COLLEGE_ADMIN`), `status`.
-- **AdminLogin**: `adminId` (Ref: `Admin`, unique), `username` (unique), `passwordHash`, `status`.
+Relationship chain: `University → College → Department`; courses can reference a department and are linked to colleges through `CollegeCourse`. Each college/course link can have semesters; semesters contain `SemesterSubject` links to subjects.
 
-#### 12. Relationships & Tracking
-- **`TeacherSubjectSkill`**: Maps `teacherId` + `subjectId` + `skillName` with unique compound index.
-- **`Enrollment`**: Maps `studentId` + `semesterSubjectId` with `enrollmentStatus` (`ENROLLED`, `COMPLETED`, `DROPPED`).
-- **`TeachingAssignment`**: Maps `teacherId` + `semesterSubjectId` with `approvedByAdminId` and `status` (`PENDING`, `APPROVED`, `REJECTED`).
-- **`LoginActivity`**: Logs login attempts: `role` (`STUDENT`, `TEACHER`, `ADMIN`), `accountId`, `username`, `success` (Boolean), `ipAddress`.
-- **`ManagementActivity`**: Administrative audit trail: `actorId` (Ref: `Admin`), `action`, `entityType`, `entityId`, `entityLabel`, `collegeId`.
+### Accounts, enrollment, and academic activity
 
----
+| Model | Main fields / references |
+| --- | --- |
+| `Student` | Name/email, optional student ID and phone, optional `collegeCourseId`, department, semester/year, enrollment date, profile image URL, optional mentor `teacherId`, status (`ACTIVE`, `INACTIVE`, `SUSPENDED`), `archivedAt`. |
+| `StudentLogin` | Unique `studentId`, unique username, password hash, login status (`ACTIVE`, `DISABLED`). |
+| `Teacher` | Required college, name/email, optional teacher ID/phone, department, specialization/designation, assigned courses, skills, profile image URL, status, archive timestamp. |
+| `TeacherLogin` | Unique `teacherId`, unique username, password hash, login status. |
+| `Admin` | Name/email, optional college, role (`SUPER_ADMIN`, `COLLEGE_ADMIN`), status. |
+| `AdminLogin` | Unique `adminId`, unique username, password hash, login status. |
+| `TeacherSubjectSkill` | Teacher/subject mapping and skill name; unique teacher/subject pair. |
+| `Enrollment` | Student and semester-subject references; status (`ENROLLED`, `COMPLETED`, `DROPPED`); unique student/subject pair. |
+| `TeachingAssignment` | Teacher and semester-subject references, optional approving admin, status (`PENDING`, `APPROVED`, `REJECTED`); unique teacher/subject pair. |
+| `Attendance` | Student, optional semester-subject/course/college, date, status (`PRESENT`, `ABSENT`, `LATE`, `EXCUSED`), remarks, marking teacher, academic year. |
+| `Grade` | Student, optional semester-subject/course, exam type (`MIDTERM`, `FINAL`, `QUIZ`, `ASSIGNMENT`, `PROJECT`), marks/max marks, grade/remarks, year/semester, teacher. |
+| `Assignment` | Title/description, optional semester-subject/course, teacher, due date, max marks, attachment URL, status (`ACTIVE`, `CLOSED`, `ARCHIVED`). |
+| `AssignmentSubmission` | Assignment/student, submission text and/or file URL, submission time, marks, feedback, grading metadata; unique assignment/student pair. |
+| `FeeRecord` | Unique student, optional course/college, academic year, total/paid amounts, fee status (`PAID`, `PARTIAL`, `PENDING`, `OVERDUE`), due date, embedded payment transaction array. |
+| `AcademicSession` | Unique name, start/end dates, `isCurrent`, status (`UPCOMING`, `ACTIVE`, `COMPLETED`). |
 
-## 4. Architectural Highlights & Design Decisions
-1. **Separation of Profile and Auth Credentials**: User profiles (`Student`, `Teacher`, `Admin`) are decoupled from authentication documents (`StudentLogin`, `TeacherLogin`, `AdminLogin`), preserving data isolation and allowing easy soft-deletion/disabling without data loss.
-2. **Soft Deletions**: Academic entities implement `archivedAt: Date` rather than hard database removals, preserving relational integrity across historical academic records.
-3. **Session-based SSR**: Employs server-side rendering with EJS and express-session cookies (`sms.sid`) with httpOnly and sameSite policies.
+### Activity, announcements, and chat
+
+| Model | Main fields / references |
+| --- | --- |
+| `LoginActivity` | Role, optional account ID, submitted username, success flag, IP address. |
+| `ManagementActivity` | Admin actor, action, entity type/ID/label, optional college scope. |
+| `Announcement` | Title/content, author identity and role, target role (`ALL`, `STUDENT`, `TEACHER`), optional college/course. |
+| `Notification` | Recipient ID/role, title/message, type (`CHAT`, `ASSIGNMENT`, `ANNOUNCEMENT`, `GRADE`, `ATTENDANCE`, `FEE`, `SYSTEM`), link, read flag. |
+| `Conversation` | Participants (ID/role/name) and last-message summary. |
+| `ChatMessage` | Conversation, sender/recipient identity, content, and `readBy` IDs. |
+
+## Implemented workflows and limits
+
+- **University discovery:** the public directory is backed by `University` records. Seed data includes institution/program source URLs. This is separate from the admin-managed `College` and academic catalogue.
+- **Student signup:** creates a profile and login without requiring an existing college/course assignment. Enrollment becomes available after an admin assigns the student to a college-course.
+- **Teacher signup:** chooses the first unarchived college as context; signup is unavailable if no such college exists.
+- **OTP and recovery:** codes expire in five minutes and are attempt-limited. Signup OTPs are held in the session and shown only outside production because no email/SMS service is integrated. Password reset is unavailable in production until delivery is configured; development shows the generated code in the page.
+- **Student/teacher archive:** sets archive/status fields and disables the associated login while retaining academic history.
+- **Assignments:** submissions accept text and/or a URL. There is no file upload/storage service.
+- **Images:** profiles store image URLs; there is no image upload pipeline.
+- **Assistant:** the home-page assistant is a client-side rules/FAQ helper and does not use an AI API.
+- **Reports:** the admin exports include student, attendance, fee, and grade reports in XLSX and PDF.
+
+## Real-time events and chat
+
+Socket.IO shares the Express HTTP server and session middleware. A socket may authenticate using a valid JWT passed in handshake auth/query or the `sms.sid` cookie. Authenticated sockets join `user:<id>` and `role:<role>` rooms. Presence is kept in an in-process map; it is not a durable or cross-instance presence store.
+
+| Event | Direction | Behavior |
+| --- | --- | --- |
+| `online_users` | Server → connecting client | Sends current online user IDs. |
+| `user_status` | Server → all clients | Announces `{ userId, status }` on connect/disconnect. |
+| `typing`, `stop_typing` | Client → server | Carries recipient/conversation identifiers; server forwards `user_typing` or `user_stop_typing`. |
+| `send_message` | Client → server | Persists a message, emits `new_message` to sender and recipient, creates a chat notification, and responds through optional acknowledgement. |
+| `chat_error` | Server → sender | Reports failed/invalid socket message attempts. |
+| `mark_read` | Client → server | Adds the current user to message `readBy` and emits `messages_read` to the other participant. |
+| `new_message` | Server → clients | Delivers persisted message payloads. |
+| `new_notification` | Server → user room | Delivers a notification record. |
+| `new_announcement` | Server → role room or all | Broadcasts a targeted announcement. |
+| `user_typing`, `user_stop_typing`, `messages_read` | Server → recipient | Presence within a conversation, typing state, and read-state updates. |
+
+The chat contact list is role-specific. Admins can contact active students and teachers. Teachers and students are offered admins plus relevant counterpart users derived from direct assignments, approved teaching/enrollment links, or same-college fallback. Student-to-student and teacher-to-teacher conversations are denied by the chat permission helper. Self-chat is denied.
+
+The server configures WebSocket/polling and two-minute connection-state recovery. The browser shares one socket instance and avoids connecting on guest pages. Optional Redis adapter code exists behind `REDIS_URL`, but the Redis packages are not declared in the current dependencies.
+
+## Configuration and operations
+
+Supported settings, defaults, and production caveats are listed in [BACKEND.md](./BACKEND.md#environment-variables). Never include real secrets in docs. Seed and password-reset instructions are in the [README](./README.md#requirements-and-local-setup).
+
+## Tests and deployment considerations
+
+`npm test` covers selected HTTP, auth, sanitization, chat-helper, report, and Socket.IO behavior. `npm run test:e2e` checks major public pages, access redirects, themes, guest socket behavior, and admin navigation. These are targeted checks, not complete coverage of every route or model.
+
+The application uses a default in-memory Express session store, has no CSRF middleware, and configures Socket.IO CORS with a wildcard origin. Configure production session persistence, HTTPS, origin restrictions, delivery providers, backups, data retention, and institutional privacy requirements before deployment. Review [BACKEND.md](./BACKEND.md#production-and-known-limitations) for the current caveats.

@@ -1,69 +1,72 @@
-# Frontend Guide
+# Frontend guide
 
-CampusDesk uses **EJS templates, CSS, and browser-side JavaScript** for its frontend. It is a server-rendered application: Express renders the pages and also serves the static files. There is no separate React/Vue app or frontend development server.
+CampusDesk uses EJS templates rendered by Express, shared CSS, browser JavaScript, and same-origin forms/fetch calls. It is not a separate React/Vue frontend and has no separate development server.
 
 ## Frontend files
 
-| Path                                | Responsibility                                                                       |
-| ----------------------------------- | ------------------------------------------------------------------------------------ |
-| `views/`                            | EJS page templates rendered by Express                                               |
-| `views/partials/header.ejs`         | Shared page head, navigation, flash messages, and page opening                       |
-| `views/partials/footer.ejs`         | Shared footer and browser-side script references                                     |
-| `views/auth/`                       | Signup, student/teacher login, and admin login templates                             |
-| `views/colleges/`                   | University directory and detail templates                                            |
-| `views/admin/`                      | Admin dashboard and management screens                                               |
-| `views/student/dashboard.ejs`       | Student portal and subject enrollment interface                                      |
-| `views/teacher/dashboard.ejs`       | Teacher portal and assignment interface                                              |
-| `views/home.ejs`, `views/error.ejs` | Public home and error pages                                                          |
-| `public/css/style.css`              | Shared responsive styling, components, and light theme variables                     |
-| `public/js/campus-assistant.js`     | Landing-page campus assistant and delayed account reminder                          |
-| `public/js/admin-nav.js`            | Responsive admin sidebar collapse and mobile-menu behavior                          |
+| Path | Responsibility |
+| --- | --- |
+| `views/partials/header.ejs` | Document head, CDN assets, theme initialization, navigation, notifications, account menu, and flash messages |
+| `views/partials/footer.ejs` | Shared footer and browser script references |
+| `views/home.ejs` | Public landing page, navigation, campus assistant, and timed sign-up reminder |
+| `views/auth/` | Student/teacher login, admin login, signup, and password recovery |
+| `views/colleges/` | Public university directory and detail templates |
+| `views/admin/` | Admin dashboard and management pages |
+| `views/student/` | Student dashboard, attendance, assignments, grades, and fees |
+| `views/teacher/` | Teacher dashboard, attendance, assignments/submissions, grades, and roster |
+| `views/chat.ejs` | Authenticated chat interface |
+| `views/error.ejs` | Shared error page |
+| `views/partials/admin-sidebar.ejs` | Role-aware admin navigation |
+| `public/css/style.css` | Shared responsive component styles and light/dark theme tokens |
+| `public/js/admin-nav.js` | Responsive admin menu and accordion groups |
+| `public/js/app-notifications.js` | Theme persistence, notification dropdown/toasts, and announcement toasts |
+| `public/js/socket-client.js` | Shared authenticated Socket.IO connection singleton and reconnect handling |
+| `public/js/campus-assistant.js` | Client-side FAQ-style assistant and sign-up reminder behavior |
 
-## Pages and frontend URLs
+Bootstrap 5, Bootstrap Icons, and Chart.js are referenced from CDNs in the shared header rather than bundled through npm. The app also serves Socket.IO's browser client from its own server.
 
-The browser navigates to these routes, which are rendered by the backend:
+## Page and workflow map
 
-| URL                                     | Page                                                 |
-| --------------------------------------- | ---------------------------------------------------- |
-| `/`                                     | Home or role-specific dashboard redirect             |
-| `/login`                                | Student and teacher login                            |
-| `/admin/login`                          | Admin login                                          |
-| `/signup`                               | Student/teacher signup and OTP/password verification |
-| `/colleges`                             | Searchable university directory                      |
-| `/colleges/:slug`                       | University detail page                               |
-| `/admin`                                | Admin dashboard                                      |
-| `/admin/courses`, `/admin/subjects`     | Course and subject management                        |
-| `/admin/colleges`, `/admin/departments` | College and department management                    |
-| `/admin/students`, `/admin/teachers`    | Student and teacher management                       |
-| `/admin/assignments`                    | Teaching assignment review                           |
-| `/admin/academic-structure`             | Academic structure page                              |
-| `/student`                              | Student dashboard and subject enrollment             |
-| `/teacher`                              | Teacher dashboard                                    |
+| Page / route family | Main user workflow |
+| --- | --- |
+| `/` | Explore CampusDesk, open the local FAQ-style assistant, or go to signup/login/universities. |
+| `/colleges`, `/colleges/:slug` | Search universities by text, state, or program; paginate and view a sourced profile. |
+| `/login`, `/admin/login`, `/signup`, `/forgot-password` | Sign in by role, self-register as a student/teacher, or request account recovery. |
+| `/admin` | Review dashboard activity and navigate management areas. |
+| `/admin/colleges`, `/admin/departments`, `/admin/courses`, `/admin/subjects`, `/admin/academic-structure` | Manage institution and academic catalogue, subject to role scope. |
+| `/admin/students`, `/admin/teachers`, `/admin/assignments`, `/admin/admins` | Search/manage people, review teaching assignment decisions, and (super admin) manage admin accounts. |
+| `/admin/attendance`, `/admin/fees`, `/admin/reports`, `/admin/sessions`, `/admin/announcements`, `/admin/activity` | Review attendance, record fee payments, export reports, manage sessions and announcements, and view activity. |
+| `/student` and student subroutes | Enroll in available subjects and review attendance, assignments/submissions, grades, fees, and announcements. |
+| `/teacher` and teacher subroutes | Review approved subjects and roster, record attendance, create assignments, grade submissions, and publish grades. |
+| `/chat` | Open authenticated private chat with role/campus-eligible contacts. |
 
-Several management pages have additional detail, create, edit, archive, and action URLs. See [BACKEND.md](./BACKEND.md) for the complete HTTP route list.
+See [API.md](./API.md) for the complete HTTP routes, methods, query parameters, and form fields.
 
-## Styling
+## Shared layout, theme, and navigation
 
-- Shared design tokens, layout rules, form styles, tables, responsive breakpoints, and role-specific styling live in `public/css/style.css`.
-- The shared header sets the application theme to light; there is no theme toggle or saved theme preference.
-- Admin pages receive a distinct admin body class and use the same light theme as the rest of the application.
-- EJS templates use the shared header/footer partials to keep navigation, flash messages, CSS, and scripts consistent.
-- The public home page includes an FAQ-style campus assistant that links visitors to the existing account and university pages. A sign-in/sign-up reminder appears 10 seconds after the first home-page visit in a tab; dismissing it prevents it from appearing again in that tab.
-- Admin pages share the same role-aware sidebar, active-page indicator, and responsive navigation toggle. Sidebar groups behave as accordions: opening a group closes the others, and the group containing the current admin page opens by default. The sidebar remains available on every admin route with light-theme contrast styles.
+- EJS pages use shared header/footer partials for consistent navigation, notifications, flash messages, CSS, and scripts.
+- The theme toggle switches between light and dark themes. The selection is stored in browser `localStorage` under `theme` and reused on later pages.
+- The admin sidebar groups routes, indicates the active page, and collapses/opens at the responsive breakpoint. On mobile, following a link closes the menu.
+- Layouts use responsive styles from `public/css/style.css`.
 
-## Forms and browser validation
+## Browser-side behavior
 
-Signup and login include browser-side validation and accessible inline error targets. These checks improve usability but do not replace server validation; the backend validates all submitted data independently.
+- Login and signup provide browser validation and inline error targets; server validation remains authoritative.
+- The home assistant is an in-page rule-based FAQ helper. It matches questions about accounts, login, and university discovery, then links to existing pages; it does not call an AI service.
+- The home-page account reminder appears after 10 seconds. Dismissing it stores a flag in `sessionStorage` for that tab/session.
+- Authenticated pages load notification data from `/api/notifications`, show real-time notification/announcement toasts, and can mark notifications read.
+- The chat client uses the shared Socket.IO connection manager. Guest pages do not start an authenticated socket connection.
 
-The current app uses same-origin form actions and static URLs. Since the browser and Express server share an origin, there is no separate frontend API base URL or CORS configuration to maintain.
+## Forms and same-origin APIs
 
-## Run the application
+Most interactions are standard HTML form submissions. The notification and chat features also use authenticated same-origin JSON endpoints and Socket.IO. Since pages and static files are served by Express from the same origin, no separate frontend API base URL or CORS setup is required for normal browser use.
 
-Run the Express app from the project root:
+To run locally:
 
 ```powershell
 npm install
 npm run dev
 ```
 
-Express serves both the rendered frontend and static assets on the configured `PORT` (default `8000`). There is no second frontend server to start.
+Configure `.env` and MongoDB first; see the [README](./README.md#requirements-and-local-setup).
+
