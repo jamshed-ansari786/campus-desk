@@ -1,0 +1,103 @@
+<%- include("../partials/header", { title }) %>
+<div class="container py-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <p class="text-uppercase text-primary fw-bold mb-1 small">EVALUATION</p>
+      <h1 class="h2 mb-1">Student Gradebook</h1>
+      <p class="text-muted mb-0">Record exam and assessment marks, letter grades, and academic feedback.</p>
+    </div>
+  </div>
+
+  <!-- Filter -->
+  <div class="card shadow-sm border-0 p-3 mb-4 bg-body rounded-3">
+    <form method="GET" action="/teacher/grades" class="row g-3 align-items-end">
+      <div class="col-md-5">
+        <label class="form-label small fw-bold">Select Subject</label>
+        <select name="subjectId" class="form-select" onchange="this.form.submit()">
+          <% subjects.forEach(s => { %>
+            <option value="<%= s.semesterSubjectId %>" <%= selectedSubjectId === s.semesterSubjectId ? 'selected' : '' %>>
+              <%= s.subjectName %> (<%= s.subjectCode %>)
+            </option>
+          <% }) %>
+        </select>
+      </div>
+      <div class="col-md-4">
+        <label class="form-label small fw-bold">Assessment Type</label>
+        <select name="examType" class="form-select" onchange="this.form.submit()">
+          <option value="FINAL" <%= selectedExamType === 'FINAL' ? 'selected' : '' %>>Final Examination</option>
+          <option value="MIDTERM" <%= selectedExamType === 'MIDTERM' ? 'selected' : '' %>>Midterm Examination</option>
+          <option value="QUIZ" <%= selectedExamType === 'QUIZ' ? 'selected' : '' %>>Quiz / Class Test</option>
+          <option value="PROJECT" <%= selectedExamType === 'PROJECT' ? 'selected' : '' %>>Course Project</option>
+          <option value="ASSIGNMENT" <%= selectedExamType === 'ASSIGNMENT' ? 'selected' : '' %>>Assignment Assessment</option>
+        </select>
+      </div>
+      <div class="col-md-3">
+        <span class="small text-muted">Enrolled candidates: <strong><%= students.length %></strong></span>
+      </div>
+    </form>
+  </div>
+
+  <!-- Grades Form -->
+  <% if (students && students.length) { %>
+    <form method="POST" action="/teacher/grades">
+      <input type="hidden" name="semesterSubjectId" value="<%= selectedSubjectId %>">
+      <input type="hidden" name="examType" value="<%= selectedExamType %>">
+
+      <div class="card shadow-sm border-0 rounded-3 bg-body mb-4">
+        <div class="card-header bg-body border-bottom py-3 d-flex justify-content-between align-items-center">
+          <h6 class="fw-bold mb-0">Grade Entries (<%= selectedExamType %>)</h6>
+          <div class="d-flex align-items-center gap-2">
+            <label class="small text-muted">Max Marks:</label>
+            <input type="number" name="maxMarks" value="100" class="form-control form-control-sm" style="width: 80px;">
+          </div>
+        </div>
+        <div class="table-responsive">
+          <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+              <tr>
+                <th>Student</th>
+                <th>Student ID</th>
+                <th style="width: 150px;">Marks Obtained</th>
+                <th style="width: 120px;">Grade Letter</th>
+                <th>Remarks / Comments</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% students.forEach(student => { %>
+                <% const g = gradesMap[String(student._id)] || {}; %>
+                <tr>
+                  <td>
+                    <strong class="d-block"><%= student.name %></strong>
+                    <small class="text-muted"><%= student.email %></small>
+                  </td>
+                  <td><%= student.studentId || "-" %></td>
+                  <td>
+                    <input type="number" name="grades[<%= student._id %>][marks]" class="form-control form-control-sm" value="<%= g.marksObtained != null ? g.marksObtained : '' %>" min="0" max="100" placeholder="0 - 100">
+                  </td>
+                  <td>
+                    <input type="text" name="grades[<%= student._id %>][grade]" class="form-control form-control-sm" value="<%= g.grade || '' %>" placeholder="Auto">
+                  </td>
+                  <td>
+                    <input type="text" name="grades[<%= student._id %>][remarks]" class="form-control form-control-sm" value="<%= g.remarks || '' %>" placeholder="Feedback...">
+                  </td>
+                </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        </div>
+        <div class="card-footer bg-body py-3 text-end">
+          <button type="submit" class="btn btn-primary rounded-pill px-4">
+            <i class="bi bi-save me-1"></i> Save &amp; Publish Grades
+          </button>
+        </div>
+      </div>
+    </form>
+  <% } else { %>
+    <div class="card shadow-sm border-0 p-5 text-center text-muted bg-body rounded-3">
+      <i class="bi bi-award fs-1 text-secondary mb-2"></i>
+      <h5>No students enrolled in this subject.</h5>
+    </div>
+  <% } %>
+</div>
+<%- include("../partials/footer") %>
+

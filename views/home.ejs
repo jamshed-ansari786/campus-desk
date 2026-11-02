@@ -1,0 +1,132 @@
+<%- include("partials/header", { title, isHome: true }) %>
+<div class="home-landing">
+  <section class="home-hero">
+    <div class="home-hero-copy">
+      <p class="home-kicker"><span></span> YOUR CAMPUS, CONNECTED</p>
+      <h1>Make your next move <em>count.</em></h1>
+      <p class="home-intro">A clearer way to explore universities, manage your learning, and stay connected to the people who help you grow.</p>
+      <div class="home-actions">
+        <a class="home-button home-button-primary" href="/colleges">Explore universities <span aria-hidden="true">→</span></a>
+        <a class="home-button home-button-light" href="/signup">Create an account</a>
+      </div>
+      <p class="home-trust"><span aria-hidden="true">✓</span> One simple place for your campus journey</p>
+    </div>
+    <div class="home-visual" aria-label="A preview of the CampusDesk student dashboard">
+      <div class="home-orbit home-orbit-one"></div>
+      <div class="home-orbit home-orbit-two"></div>
+      <div class="home-dashboard">
+        <div class="home-dashboard-top"><span class="home-dashboard-mark">C</span><span>My learning</span><span class="home-dashboard-dots" aria-hidden="true">···</span></div>
+        <p class="home-dashboard-label">YOUR CAMPUS AT A GLANCE</p>
+        <h2>Good things<br>are in progress.</h2>
+        <div class="home-progress"><span><i></i></span><strong>Learning, one step at a time</strong><small>Keep exploring</small></div>
+        <div class="home-dashboard-bottom"><span class="home-avatar">S</span><span><strong>Student portal</strong><small>Made for your next chapter</small></span><span class="home-arrow" aria-hidden="true">↗</span></div>
+      </div>
+      <div class="home-float-card home-float-top"><span class="home-float-icon">✦</span><span><strong>Find your fit</strong><small>Explore universities</small></span></div>
+      <div class="home-float-card home-float-bottom"><span class="home-float-check" aria-hidden="true">✓</span><span><strong>All in one place</strong><small>Courses · campus · community</small></span></div>
+    </div>
+    <a class="home-scroll-cue" href="#learning-paths"><span aria-hidden="true">↓</span> Take a look around</a>
+  </section>
+
+  <section class="home-paths" id="learning-paths">
+    <div class="home-section-heading">
+      <p class="home-kicker">A BETTER WAY TO GET THERE</p>
+      <h2>Everything you need to move forward.</h2>
+      <p>Whether you’re choosing a university or already on campus, your next step starts here.</p>
+    </div>
+    <div class="home-feature-grid">
+      <a class="home-feature-card" href="/colleges">
+        <span class="home-feature-icon home-icon-sand" aria-hidden="true">⌕</span>
+        <span class="home-feature-number">01 / EXPLORE</span>
+        <h3>Find your university</h3>
+        <p>Discover institutions and programs that fit what you want to do next.</p>
+        <span class="home-feature-link">Browse the directory <b aria-hidden="true">→</b></span>
+      </a>
+      <a class="home-feature-card" href="/signup">
+        <span class="home-feature-icon home-icon-mint" aria-hidden="true">✳</span>
+        <span class="home-feature-number">02 / LEARN</span>
+        <h3>Make learning yours</h3>
+        <p>Keep subjects, course details, and your student journey together.</p>
+        <span class="home-feature-link">Get started <b aria-hidden="true">→</b></span>
+      </a>
+      <a class="home-feature-card" href="/login">
+        <span class="home-feature-icon home-icon-lilac" aria-hidden="true">↗</span>
+        <span class="home-feature-number">03 / CONNECT</span>
+        <h3>Stay in the loop</h3>
+        <p>Students and teachers can pick up right where campus life happens.</p>
+        <span class="home-feature-link">Visit your portal <b aria-hidden="true">→</b></span>
+      </a>
+    </div>
+  </section>
+
+  <section class="home-assistant-banner" id="assistant-intro">
+    <div class="home-assistant-spark" aria-hidden="true">✦</div>
+    <div>
+      <p class="home-kicker">A LITTLE HELP GOES A LONG WAY</p>
+      <h2>Not sure where to start?</h2>
+      <p>Ask the CampusDesk assistant about accounts, universities, or finding your way around.</p>
+    </div>
+    <button class="home-button home-button-dark" type="button" data-open-assistant>Ask the assistant <span aria-hidden="true">↗</span></button>
+  </section>
+
+  <section class="home-start">
+    <div class="home-section-heading">
+      <p class="home-kicker">YOUR NEXT CHAPTER STARTS HERE</p>
+      <h2>Ready when you are.</h2>
+      <p>Sign in to pick up where you left off, or create an account to get started.</p>
+    </div>
+    <div class="home-start-actions">
+      <a class="home-start-card" href="/login"><span class="home-start-mark" aria-hidden="true">↗</span><span><strong>Welcome back</strong><small>Log in to your student or teacher portal</small></span><b aria-hidden="true">→</b></a>
+      <a class="home-start-card home-start-card-accent" href="/signup"><span class="home-start-mark" aria-hidden="true">＋</span><span><strong>New to CampusDesk?</strong><small>Create a student or teacher account</small></span><b aria-hidden="true">→</b></a>
+    </div>
+  </section>
+
+  <section class="home-contact" id="contact">
+    <span class="home-contact-mark" aria-hidden="true">C</span>
+    <p>One campus. A lot of possibility.</p>
+    <a href="#assistant-intro">Get guidance <span aria-hidden="true">↗</span></a>
+  </section>
+</div>
+
+<section class="home-prompt" data-signup-prompt hidden>
+  <div class="home-prompt-backdrop" data-close-prompt></div>
+  <div class="home-prompt-dialog" role="dialog" aria-modal="true" aria-labelledby="prompt-title" aria-describedby="prompt-copy">
+    <button class="home-prompt-close" type="button" data-close-prompt aria-label="Close sign-in reminder">×</button>
+    <span class="home-prompt-icon" aria-hidden="true">✦</span>
+    <p class="home-kicker">YOUR CAMPUS IS WAITING</p>
+    <h2 id="prompt-title">Make yourself at home.</h2>
+    <p id="prompt-copy">Sign in to your portal or create an account to start exploring CampusDesk.</p>
+    <div class="home-prompt-actions">
+      <a class="home-button home-button-primary" href="/signup">Create an account <span aria-hidden="true">→</span></a>
+      <a class="home-prompt-login" href="/login">Already have an account? <strong>Log in</strong></a>
+    </div>
+  </div>
+</section>
+
+<aside class="home-chat" data-campus-assistant>
+  <section class="home-chat-panel" id="campus-assistant-panel" data-assistant-panel hidden aria-label="CampusDesk assistant">
+    <div class="home-chat-header">
+      <span class="home-chat-avatar" aria-hidden="true">✦</span>
+      <span><strong>CampusDesk assistant</strong><small>Here to point you in the right direction</small></span>
+      <button type="button" class="home-chat-close" data-assistant-close aria-label="Close assistant">×</button>
+    </div>
+    <div class="home-chat-messages" data-assistant-messages aria-live="polite">
+      <p class="home-chat-bubble">Hi! I can help you find universities, create an account, or get back to your portal. What would you like to do?</p>
+    </div>
+    <div class="home-chat-suggestions">
+      <button type="button" data-assistant-question="How do I create an account?">Create an account</button>
+      <button type="button" data-assistant-question="How do I find universities?">Find universities</button>
+      <button type="button" data-assistant-question="How do I log in?">Log in</button>
+    </div>
+    <form class="home-chat-form" data-assistant-form>
+      <label class="sr-only" for="assistant-question">Ask a question</label>
+      <input id="assistant-question" name="question" maxlength="180" placeholder="Ask a quick question…" autocomplete="off" required>
+      <button type="submit" aria-label="Send question">↑</button>
+    </form>
+  </section>
+  <button class="home-chat-toggle" type="button" data-assistant-toggle aria-expanded="false" aria-controls="campus-assistant-panel">
+    <span class="home-chat-toggle-spark" aria-hidden="true">✦</span><span>Campus assistant</span>
+  </button>
+</aside>
+
+<script src="/js/campus-assistant.js" defer></script>
+<%- include("partials/footer") %>

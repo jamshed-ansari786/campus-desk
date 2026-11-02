@@ -1,0 +1,28 @@
+<%- include("../partials/header", { title }) %>
+<div class="admin-shell">
+  <%- include("../partials/admin-sidebar", { activePage: "students" }) %>
+  <div class="admin-content">
+    <div class="page-heading">
+      <div><p class="eyebrow">PEOPLE DIRECTORY</p><h1>Students</h1><p class="muted">Search, review, and safely archive student profiles.</p></div>
+      <a class="button primary" href="/admin/students/new">Add student</a>
+    </div>
+    <form class="panel directory-filters" method="GET" action="/admin/students">
+      <label>Search<input type="search" name="q" value="<%= filters.search %>" placeholder="Name, student ID, or email"></label>
+      <label>College<select name="college"><option value="">All colleges</option><% [...new Map(options.map(item => [item.college_id, item.college_name])).entries()].forEach(([id, name]) => { %><option value="<%= id %>" <%= filters.collegeId === id ? "selected" : "" %>><%= name %></option><% }) %></select></label>
+      <label>Course<select name="course"><option value="">All courses</option><% [...new Map(options.map(item => [item.course_id, item.course_name])).entries()].forEach(([id, name]) => { %><option value="<%= id %>" <%= filters.courseId === id ? "selected" : "" %>><%= name %></option><% }) %></select></label>
+      <label>Semester<input type="number" min="1" name="semester" value="<%= filters.semesterNo %>" placeholder="Any"></label>
+      <button class="button primary" type="submit">Apply filters</button>
+    </form>
+    <p class="muted"><%= pagination.total %> active student<%= pagination.total === 1 ? "" : "s" %></p>
+    <section class="panel"><div class="table-wrap"><table><thead><tr><th>Student</th><th>Email</th><th>College</th><th>Course</th><th>Semester</th><th>Status</th><th>Actions</th></tr></thead><tbody>
+    <% students.forEach(s => { %><tr><td><strong><a href="/admin/students/<%= s.student_id %>"><%= s.name %></a></strong><small>ID: <%= s.custom_student_id || s.student_id %></small></td><td><%= s.email %></td><td><%= s.college_name %></td><td><%= s.course_name %></td><td><%= s.semester_no || "—" %></td><td><span class="status"><%= s.status %></span></td><td><div class="decision"><a class="button tiny secondary" href="/admin/students/<%= s.student_id %>/edit">Edit</a><form method="POST" action="/admin/students/<%= s.student_id %>/archive" onsubmit="return confirm('Archive this student and disable their login?')"><button class="button tiny danger" type="submit">Archive</button></form></div></td></tr><% }) %>
+    <% if (!students.length) { %><tr><td colspan="7">No active students match these filters.</td></tr><% } %>
+    </tbody></table></div></section>
+    <% if (pagination.pages > 1) { %><nav class="pagination" aria-label="Student pages">
+      <% if (pagination.page > 1) { %><a class="button secondary" href="/admin/students?q=<%= encodeURIComponent(filters.search) %>&college=<%= encodeURIComponent(filters.collegeId) %>&course=<%= encodeURIComponent(filters.courseId) %>&semester=<%= encodeURIComponent(filters.semesterNo) %>&page=<%= pagination.page - 1 %>">Previous</a><% } %>
+      <span>Page <%= pagination.page %> of <%= pagination.pages %></span>
+      <% if (pagination.page < pagination.pages) { %><a class="button secondary" href="/admin/students?q=<%= encodeURIComponent(filters.search) %>&college=<%= encodeURIComponent(filters.collegeId) %>&course=<%= encodeURIComponent(filters.courseId) %>&semester=<%= encodeURIComponent(filters.semesterNo) %>&page=<%= pagination.page + 1 %>">Next</a><% } %>
+    </nav><% } %>
+  </div>
+</div>
+<%- include("../partials/footer") %>

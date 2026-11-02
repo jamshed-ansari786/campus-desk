@@ -1,0 +1,17 @@
+<%- include("../partials/header", { title }) %>
+<div class="admin-shell">
+  <%- include("../partials/admin-sidebar", { activePage: "assignments" }) %>
+  <div class="admin-content">
+    <div class="page-heading">
+      <div><p class="eyebrow">ACADEMIC APPROVALS</p><h1>Teaching assignments</h1><p class="muted">Review subject allocation requests before they are finalized.</p></div>
+      <a class="button secondary" href="/admin">← Dashboard</a>
+    </div>
+    <section class="panel"><div class="table-wrap"><table><thead><tr><th>Teacher</th><th>Subject</th><th>Semester</th><th>College</th><th>Status</th><th>Decision</th></tr></thead><tbody>
+    <% assignments.forEach(a => { %><tr><td><strong><%= a.teacher_name %></strong></td><td><%= a.code %> — <%= a.subject_name %></td><td><%= a.semester_no %></td><td><%= a.college_name %></td><td><span class="status"><%= a.status %></span></td><td>
+    <% if (a.status === "PENDING") { %><div class="decision"><form method="POST" action="/admin/assignments/<%= a.assignment_id %>/decision"><input type="hidden" name="status" value="APPROVED"><button class="button tiny primary">Approve</button></form><form method="POST" action="/admin/assignments/<%= a.assignment_id %>/decision"><input type="hidden" name="status" value="REJECTED"><button class="button tiny danger">Reject</button></form></div><% } else { %>—<% } %>
+    </td></tr><% }) %>
+    <% if (!assignments.length) { %><tr><td colspan="6">No assignments found. Run <strong>npm run db:seed</strong> to load demo data.</td></tr><% } %>
+    </tbody></table></div></section>
+  </div>
+</div>
+<%- include("../partials/footer") %>

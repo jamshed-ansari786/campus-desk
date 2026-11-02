@@ -1,0 +1,29 @@
+<%- include("../partials/header", { title }) %>
+<div class="admin-shell">
+  <%- include("../partials/admin-sidebar", { activePage: "departments" }) %>
+  <div class="admin-content">
+    <div class="page-heading"><div><p class="eyebrow">ACADEMIC ORGANIZATION</p><h1>Departments</h1><p class="muted">Create and maintain departments within their actual colleges.</p></div></div>
+    <form class="panel form-grid" method="POST" action="/admin/departments">
+      <h2 class="span-two">Add a department</h2>
+      <% if (currentUser.adminRole === "SUPER_ADMIN") { %>
+        <label>College<select name="college_id" required><option value="">Select a college</option><% colleges.forEach(item => { %><option value="<%= item._id %>"><%= item.name %></option><% }) %></select></label>
+      <% } %>
+      <label>Department name<input name="name" required maxlength="140"></label>
+      <label class="span-two">Description<input name="description" maxlength="500"></label>
+      <button class="button primary span-two" type="submit">Add department</button>
+    </form>
+    <section class="panel">
+      <h2>Active departments <span class="count"><%= departments.length %></span></h2>
+      <div class="table-wrap"><table><thead><tr><th>Department</th><th>College</th><th>Description</th><th>Actions</th></tr></thead><tbody>
+      <% departments.forEach(item => { %><tr><td colspan="3"><form class="department-edit form-grid" method="POST" action="/admin/departments/<%= item._id %>/update">
+        <label>Department<input name="name" required maxlength="140" value="<%= item.name %>"></label>
+        <label>Description<input name="description" maxlength="500" value="<%= item.description || '' %>"></label>
+        <span><%= item.collegeId?.name || "—" %></span>
+        <button class="button tiny secondary" type="submit">Save</button>
+      </form></td><td><form method="POST" action="/admin/departments/<%= item._id %>/archive" onsubmit="return confirm('Archive this department? Existing profiles and courses will be preserved.')"><button class="button tiny danger" type="submit">Archive</button></form></td></tr><% }) %>
+      <% if (!departments.length) { %><tr><td colspan="4">No active departments are available.</td></tr><% } %>
+      </tbody></table></div>
+    </section>
+  </div>
+</div>
+<%- include("../partials/footer") %>

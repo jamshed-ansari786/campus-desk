@@ -1,0 +1,127 @@
+<aside class="admin-sidebar" aria-label="Administration">
+  <div class="admin-sidebar-header">
+    <div>
+      <p>Workspace</p>
+      <h2>Campus control</h2>
+    </div>
+    <button
+      class="admin-nav-toggle"
+      type="button"
+      data-admin-nav-toggle
+      aria-controls="admin-navigation"
+      aria-expanded="true"
+      aria-label="Collapse administration navigation"
+    >
+      <span aria-hidden="true" class="admin-nav-toggle-icon"></span>
+      <span class="admin-nav-toggle-label" data-admin-nav-toggle-label>Collapse</span>
+    </button>
+  </div>
+  <nav id="admin-navigation" aria-label="Admin navigation">
+    <div class="admin-nav-section" data-admin-nav-section>
+      <button class="admin-nav-group" type="button" data-admin-nav-section-toggle aria-controls="admin-section-overview" aria-expanded="<%= activePage === 'overview' %>">
+        <span>Overview</span><span class="admin-nav-chevron" aria-hidden="true"></span>
+      </button>
+      <div class="admin-nav-items" id="admin-section-overview" <%= activePage === 'overview' ? '' : 'hidden' %>>
+        <a class="<%= activePage === 'overview' ? 'active' : '' %>" href="/admin" <%= activePage === 'overview' ? 'aria-current="page"' : '' %>>
+          <span class="admin-nav-icon" aria-hidden="true">OV</span><span class="admin-nav-label">Dashboard</span>
+        </a>
+        <a class="<%= activePage === 'chat' ? 'active' : '' %>" href="/chat" <%= activePage === 'chat' ? 'aria-current="page"' : '' %>>
+          <span class="admin-nav-icon" aria-hidden="true">CH</span><span class="admin-nav-label">Live Messages</span>
+        </a>
+      </div>
+    </div>
+
+    <div class="admin-nav-section" data-admin-nav-section>
+      <button class="admin-nav-group" type="button" data-admin-nav-section-toggle aria-controls="admin-section-institution" aria-expanded="<%= ['colleges', 'departments'].includes(activePage) %>">
+        <span>Institution</span><span class="admin-nav-chevron" aria-hidden="true"></span>
+      </button>
+      <div class="admin-nav-items" id="admin-section-institution" <%= ['colleges', 'departments'].includes(activePage) ? '' : 'hidden' %>>
+        <a class="<%= activePage === 'colleges' ? 'active' : '' %>" href="/admin/colleges" <%= activePage === 'colleges' ? 'aria-current="page"' : '' %>>
+          <span class="admin-nav-icon" aria-hidden="true">CL</span><span class="admin-nav-label">Colleges</span>
+        </a>
+        <a class="<%= activePage === 'departments' ? 'active' : '' %>" href="/admin/departments" <%= activePage === 'departments' ? 'aria-current="page"' : '' %>>
+          <span class="admin-nav-icon" aria-hidden="true">DP</span><span class="admin-nav-label">Departments</span>
+        </a>
+      </div>
+    </div>
+
+    <% if (currentUser.adminRole === "SUPER_ADMIN") { %>
+      <div class="admin-nav-section" data-admin-nav-section>
+        <button class="admin-nav-group" type="button" data-admin-nav-section-toggle aria-controls="admin-section-academics" aria-expanded="<%= ['courses', 'subjects', 'academic-structure', 'sessions'].includes(activePage) %>">
+          <span>Academics</span><span class="admin-nav-chevron" aria-hidden="true"></span>
+        </button>
+        <div class="admin-nav-items" id="admin-section-academics" <%= ['courses', 'subjects', 'academic-structure', 'sessions'].includes(activePage) ? '' : 'hidden' %>>
+          <a class="<%= activePage === 'courses' ? 'active' : '' %>" href="/admin/courses" <%= activePage === 'courses' ? 'aria-current="page"' : '' %>>
+            <span class="admin-nav-icon" aria-hidden="true">CR</span><span class="admin-nav-label">Courses</span>
+          </a>
+          <a class="<%= activePage === 'subjects' ? 'active' : '' %>" href="/admin/subjects" <%= activePage === 'subjects' ? 'aria-current="page"' : '' %>>
+            <span class="admin-nav-icon" aria-hidden="true">SB</span><span class="admin-nav-label">Subjects</span>
+          </a>
+          <a class="<%= activePage === 'academic-structure' ? 'active' : '' %>" href="/admin/academic-structure" <%= activePage === 'academic-structure' ? 'aria-current="page"' : '' %>>
+            <span class="admin-nav-icon" aria-hidden="true">AS</span><span class="admin-nav-label">Academic structure</span>
+          </a>
+          <a class="<%= activePage === 'sessions' ? 'active' : '' %>" href="/admin/sessions" <%= activePage === 'sessions' ? 'aria-current="page"' : '' %>>
+            <span class="admin-nav-icon" aria-hidden="true">SN</span><span class="admin-nav-label">Academic Sessions</span>
+          </a>
+        </div>
+      </div>
+    <% } %>
+
+    <div class="admin-nav-section" data-admin-nav-section>
+      <button class="admin-nav-group" type="button" data-admin-nav-section-toggle aria-controls="admin-section-people" aria-expanded="<%= ['students', 'teachers', 'assignments', 'admins'].includes(activePage) %>">
+        <span>People &amp; Roles</span><span class="admin-nav-chevron" aria-hidden="true"></span>
+      </button>
+      <div class="admin-nav-items" id="admin-section-people" <%= ['students', 'teachers', 'assignments', 'admins'].includes(activePage) ? '' : 'hidden' %>>
+        <a class="<%= activePage === 'students' ? 'active' : '' %>" href="/admin/students" <%= activePage === 'students' ? 'aria-current="page"' : '' %>>
+          <span class="admin-nav-icon" aria-hidden="true">ST</span><span class="admin-nav-label">Students</span>
+        </a>
+        <a class="<%= activePage === 'teachers' ? 'active' : '' %>" href="/admin/teachers" <%= activePage === 'teachers' ? 'aria-current="page"' : '' %>>
+          <span class="admin-nav-icon" aria-hidden="true">TC</span><span class="admin-nav-label">Teachers</span>
+        </a>
+        <a class="<%= activePage === 'assignments' ? 'active' : '' %>" href="/admin/assignments" <%= activePage === 'assignments' ? 'aria-current="page"' : '' %>>
+          <span class="admin-nav-icon" aria-hidden="true">AS</span><span class="admin-nav-label">Assignments</span>
+        </a>
+        <% if (currentUser.adminRole === "SUPER_ADMIN") { %>
+          <a class="<%= activePage === 'admins' ? 'active' : '' %>" href="/admin/admins" <%= activePage === 'admins' ? 'aria-current="page"' : '' %>>
+            <span class="admin-nav-icon" aria-hidden="true">AD</span><span class="admin-nav-label">Administrators</span>
+          </a>
+        <% } %>
+      </div>
+    </div>
+
+    <div class="admin-nav-section" data-admin-nav-section>
+      <button class="admin-nav-group" type="button" data-admin-nav-section-toggle aria-controls="admin-section-ops" aria-expanded="<%= ['fees', 'attendance', 'announcements'].includes(activePage) %>">
+        <span>Operations</span><span class="admin-nav-chevron" aria-hidden="true"></span>
+      </button>
+      <div class="admin-nav-items" id="admin-section-ops" <%= ['fees', 'attendance', 'announcements'].includes(activePage) ? '' : 'hidden' %>>
+        <a class="<%= activePage === 'fees' ? 'active' : '' %>" href="/admin/fees" <%= activePage === 'fees' ? 'aria-current="page"' : '' %>>
+          <span class="admin-nav-icon" aria-hidden="true">FE</span><span class="admin-nav-label">Fee Records</span>
+        </a>
+        <a class="<%= activePage === 'attendance' ? 'active' : '' %>" href="/admin/attendance" <%= activePage === 'attendance' ? 'aria-current="page"' : '' %>>
+          <span class="admin-nav-icon" aria-hidden="true">AT</span><span class="admin-nav-label">Attendance</span>
+        </a>
+        <a class="<%= activePage === 'announcements' ? 'active' : '' %>" href="/admin/announcements" <%= activePage === 'announcements' ? 'aria-current="page"' : '' %>>
+          <span class="admin-nav-icon" aria-hidden="true">AN</span><span class="admin-nav-label">Announcements</span>
+        </a>
+      </div>
+    </div>
+
+    <div class="admin-nav-section" data-admin-nav-section>
+      <button class="admin-nav-group" type="button" data-admin-nav-section-toggle aria-controls="admin-section-reports" aria-expanded="<%= ['reports', 'activity'].includes(activePage) %>">
+        <span>Reports &amp; Logs</span><span class="admin-nav-chevron" aria-hidden="true"></span>
+      </button>
+      <div class="admin-nav-items" id="admin-section-reports" <%= ['reports', 'activity'].includes(activePage) ? '' : 'hidden' %>>
+        <a class="<%= activePage === 'reports' ? 'active' : '' %>" href="/admin/reports" <%= activePage === 'reports' ? 'aria-current="page"' : '' %>>
+          <span class="admin-nav-icon" aria-hidden="true">RP</span><span class="admin-nav-label">Reports &amp; Export</span>
+        </a>
+        <a class="<%= activePage === 'activity' ? 'active' : '' %>" href="/admin/activity" <%= activePage === 'activity' ? 'aria-current="page"' : '' %>>
+          <span class="admin-nav-icon" aria-hidden="true">LG</span><span class="admin-nav-label">Activity Logs</span>
+        </a>
+      </div>
+    </div>
+  </nav>
+  <div class="admin-sidebar-note">
+    <span class="admin-status-dot" aria-hidden="true"></span>
+    <span class="admin-nav-label"><strong>Admin Workspace</strong><small>Active &amp; Protected</small></span>
+  </div>
+</aside>

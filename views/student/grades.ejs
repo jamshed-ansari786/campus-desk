@@ -1,0 +1,81 @@
+<%- include("../partials/header", { title }) %>
+<div class="container py-4">
+  <div class="mb-4">
+    <a href="/student" class="text-decoration-none small text-muted"><i class="bi bi-arrow-left"></i> Back to Dashboard</a>
+    <h1 class="h2 mt-2 mb-1">Academic Transcript &amp; Results</h1>
+    <p class="text-muted mb-0">Examination grades, assessment results, and cumulative performance.</p>
+  </div>
+
+  <!-- KPI summary -->
+  <div class="row g-3 mb-4">
+    <div class="col-md-4">
+      <div class="card shadow-sm border-0 p-3 rounded-3 bg-body">
+        <span class="text-muted small">Overall Score</span>
+        <h3 class="fw-bold my-1 text-primary"><%= stats.overallPct %>%</h3>
+        <span class="text-muted small">Total Marks: <%= stats.totalMarks %> / <%= stats.totalMax %></span>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card shadow-sm border-0 p-3 rounded-3 bg-body">
+        <span class="text-muted small">Estimated GPA (10 pt Scale)</span>
+        <h3 class="fw-bold my-1 text-success"><%= stats.gpa %></h3>
+        <span class="text-muted small">Calculated aggregate</span>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card shadow-sm border-0 p-3 rounded-3 bg-body">
+        <span class="text-muted small">Evaluated Subjects</span>
+        <h3 class="fw-bold my-1 text-info"><%= grades.length %></h3>
+        <span class="text-muted small">Graded assessments</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Results Table -->
+  <div class="card shadow-sm border-0 rounded-3 bg-body">
+    <div class="card-header bg-body border-bottom py-3">
+      <h5 class="fw-bold mb-0"><i class="bi bi-award text-primary me-2"></i>Subject Examination Grades</h5>
+    </div>
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>Subject</th>
+            <th>Code</th>
+            <th>Exam Type</th>
+            <th>Marks Obtained</th>
+            <th>Letter Grade</th>
+            <th>Evaluator Feedback</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% if (grades && grades.length) { %>
+            <% grades.forEach(g => { %>
+              <tr>
+                <td><strong><%= g.semesterSubjectId?.subjectId?.name || "Subject" %></strong></td>
+                <td><span class="badge bg-secondary-subtle text-secondary"><%= g.semesterSubjectId?.subjectId?.code || "" %></span></td>
+                <td><span class="badge bg-primary-subtle text-primary"><%= g.examType %></span></td>
+                <td>
+                  <strong><%= g.marksObtained %></strong> / <%= g.maxMarks %>
+                  <small class="text-muted ms-1">(<%= Math.round((g.marksObtained / g.maxMarks) * 100) %>%)</small>
+                </td>
+                <td>
+                  <span class="badge <%= ['A+', 'A'].includes(g.grade) ? 'bg-success' : ['B', 'C'].includes(g.grade) ? 'bg-info' : 'bg-warning' %>-subtle text-<%= ['A+', 'A'].includes(g.grade) ? 'success' : ['B', 'C'].includes(g.grade) ? 'info' : 'warning' %> fs-6">
+                    <%= g.grade || 'N/A' %>
+                  </span>
+                </td>
+                <td><small class="text-muted"><%= g.remarks || "Satisfactory work." %></small></td>
+              </tr>
+            <% }) %>
+          <% } else { %>
+            <tr>
+              <td colspan="6" class="text-center py-4 text-muted">No examination marks published yet.</td>
+            </tr>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+<%- include("../partials/footer") %>
+

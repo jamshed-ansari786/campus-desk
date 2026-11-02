@@ -1,0 +1,11 @@
+<%- include("../partials/header", { title }) %>
+<div class="admin-shell">
+  <%- include("../partials/admin-sidebar", { activePage: "academic-structure" }) %>
+  <div class="admin-content">
+    <div class="page-heading"><div><p class="eyebrow">ER DIAGRAM · MONGODB</p><h1>Academic structure</h1><p class="muted">University, college, course, semester, subject, student, and teacher records.</p></div><a class="button secondary" href="/admin">← Dashboard</a></div>
+    <section class="stats-grid">
+    <% Object.entries(stats).forEach(([label,value]) => { %><article class="panel stat-card"><p class="muted"><%= label.charAt(0).toUpperCase()+label.slice(1) %></p><h2><%= value %></h2></article><% }) %>
+    </section><section class="panel"><h2>Manage academic data</h2><p>Use the course, subject, student, teacher, and assignment pages to manage available records. University, college, and semester data are prepared using the seed script.</p><div class="actions"><a class="button primary" href="/admin/courses">Courses</a><a class="button secondary" href="/admin/subjects">Subjects</a><a class="button secondary" href="/admin/teachers">Teachers</a><a class="button secondary" href="/admin/students">Students</a><a class="button secondary" href="/admin/assignments">Teaching assignments</a></div></section>
+  </div>
+</div>
+<%- include("../partials/footer") %>

@@ -1,0 +1,32 @@
+<%- include("../partials/header", { title }) %>
+<div class="admin-shell">
+  <%- include("../partials/admin-sidebar", { activePage: "courses" }) %>
+  <div class="admin-content">
+    <div class="page-heading"><div><p class="eyebrow">ACADEMIC CATALOGUE</p><h1>Courses</h1><p class="muted">Define the programs offered by your institution.</p></div><a class="button secondary" href="/admin">← Dashboard</a></div>
+    <section class="two-column">
+      <form class="panel" method="POST" action="/admin/courses"><h2>Add a course</h2>
+        <label>Course name<input name="name" required maxlength="120" placeholder="e.g. BCA"></label>
+        <label>Course code<input name="code" maxlength="30" placeholder="Optional unique code"></label>
+        <label>Duration (years)<input type="number" name="duration_years" min="0.5" step="0.5" required placeholder="e.g. 3"></label>
+        <label>Department<select name="department_id"><option value="">Not specified</option><% departments.forEach(item => { %><option value="<%= item.department_id %>"><%= item.name %> · <%= item.college_name %></option><% }) %></select></label>
+        <label>Description<input name="description" maxlength="500" placeholder="Optional course description"></label>
+        <label>Available at colleges<select name="college_ids" multiple size="4"><% colleges.forEach(item => { %><option value="<%= item._id %>"><%= item.name %></option><% }) %></select><small>Optional. Hold Ctrl (Windows) or Command (Mac) to select multiple.</small></label>
+        <button class="button primary full" type="submit">Add course</button>
+      </form>
+      <section class="panel"><h2>Course catalogue <span class="count"><%= courses.length %></span></h2>
+        <div class="table-wrap"><table><thead><tr><th>Code</th><th>Course</th><th>Duration</th><th>Department</th><th>Colleges</th><th>Actions</th></tr></thead><tbody>
+          <% courses.forEach(course => { const formId = `course-update-${course.course_id}`; %><tr>
+            <td><input form="<%= formId %>" name="code" maxlength="30" value="<%= course.code %>" aria-label="Course code"></td>
+            <td><input form="<%= formId %>" name="name" required maxlength="120" value="<%= course.name %>" aria-label="Course name"><textarea form="<%= formId %>" name="description" maxlength="500" rows="2" aria-label="Course description"><%= course.description %></textarea></td>
+            <td><input form="<%= formId %>" name="duration_years" type="number" min="0.5" step="0.5" required value="<%= course.duration_years %>" aria-label="Duration in years"></td>
+            <td><select form="<%= formId %>" name="department_id" aria-label="Department"><option value="">Not specified</option><% departments.forEach(item => { %><option value="<%= item.department_id %>" <%= item.department_id === course.department_id ? "selected" : "" %>><%= item.name %></option><% }) %></select></td>
+            <td><select form="<%= formId %>" name="college_ids" multiple size="3" aria-label="Colleges offering this course"><% colleges.forEach(item => { %><option value="<%= item._id %>" <%= course.college_ids.includes(String(item._id)) ? "selected" : "" %>><%= item.name %></option><% }) %></select><small><%= course.college_count %> linked college(s). Existing links are preserved.</small></td>
+            <td><div class="decision"><form id="<%= formId %>" method="POST" action="/admin/courses/<%= course.course_id %>/update"><button class="button tiny secondary" type="submit">Save</button></form><form method="POST" action="/admin/courses/<%= course.course_id %>/archive" onsubmit="return confirm('Archive this course? Existing academic records will be preserved.')"><button class="button tiny danger" type="submit">Archive</button></form></div></td>
+          </tr><% }) %>
+          <% if (!courses.length) { %><tr><td colspan="6">No active courses found.</td></tr><% } %>
+        </tbody></table></div>
+      </section>
+    </section>
+  </div>
+</div>
+<%- include("../partials/footer") %>

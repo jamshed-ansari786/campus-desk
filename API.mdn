@@ -1,0 +1,195 @@
+# CampusDesk: application overview and API
+
+This document describes the application as it exists in this project. CampusDesk is a server-rendered web application: most endpoints return EJS pages or redirect after processing HTML forms. It is **not currently a JSON REST API**. The health endpoint is the only route that returns JSON.
+
+## What the application is made of
+
+| Layer | Technology and responsibility |
+| --- | --- |
+| Runtime and server | Node.js and Express, started from `server.js`. Express serves the pages and static files from the same origin. |
+| Page rendering | EJS templates under `views/`; shared header and footer are in `views/partials/`. |
+| Styling and browser behavior | Responsive CSS in `public/css/style.css`; browser scripts in `public/js/` handle the campus assistant and admin navigation. |
+| Database | MongoDB accessed through Mongoose schemas in `models/index.js`. |
+| Authentication | Express session cookies, role checks in `middleware/auth.js`, and bcryptjs password hashes. |
+| Request processing | URL-encoded HTML form bodies are parsed by Express with a 20 KB limit. Flash messages are prepared by `middleware/flash.js`. |
+| Configuration | `.env` values are loaded by dotenv; MongoDB defaults to the local `student_management` database if `MONGO_URI` is not set. |
+
+### Main page and feature areas
+
+- **Public homepage** (`/`): university discovery entry points, learning and account links, the campus assistant, and a timed sign-up reminder.
+- **Authentication** (`/login`, `/signup`, `/admin/login`): student/teacher login, student/teacher account creation with OTP verification, and separate administrator login.
+- **University directory** (`/colleges`): paginated search and filters; university detail pages are addressed by slug.
+- **Student portal** (`/student`): profile, course and subject information, and subject enrollment.
+- **Teacher portal** (`/teacher`): teaching assignment overview.
+- **Admin workspace** (`/admin`): statistics and management for colleges, departments, courses, subjects, students, teachers, and teaching-assignment decisions. Some management pages and operations are limited to super administrators; college administrators have college-scoped access.
+
+The existing Mongoose models cover universities, colleges, departments, courses and college/course links, semesters, subjects and semester/subject links, student/teacher/admin profiles and login records, teacher subject skills, enrollments, teaching assignments, login activity, and management activity.
+
+### Authentication and security behavior
+
+- Successful logins regenerate the session before setting the authenticated user.
+- Session cookies are HTTP-only, use `SameSite=Lax`, and use the `secure` flag in production. Session lifetime is four hours.
+- Passwords are stored as bcrypt hashes; signup and admin-created accounts hash passwords with 12 rounds.
+- Login and signup are validated on the server as well as in the browser.
+- Public signup supports only `STUDENT` and `TEACHER`; administrator accounts use `/admin/login`.
+- Signup OTPs expire after five minutes and are limited to five attempts per session. The OTP is displayed only outside production because no email/SMS provider is configured.
+- Admin, student, and teacher route groups require the corresponding authenticated role. Admin routes also enforce college scope or super-admin permissions where applicable.
+- Admin archive actions preserve related academic records instead of deleting them.
+
+## Route count
+
+There are **46 declared method-and-path endpoints** across **37 distinct URL path patterns**. Reusing one URL with different HTTP methods counts as multiple endpoints (for example, `GET /signup` and `POST /signup`).
+
+| Route file / mount | Endpoints |
+| --- | ---: |
+| `server.js` | 2 |
+| `routes/auth.js` mounted at `/` | 7 |
+| `routes/colleges.js` mounted at `/colleges` | 2 |
+| `routes/admin.js` mounted at `/admin` | 32 |
+| `routes/student.js` mounted at `/student` | 2 |
+| `routes/teacher.js` mounted at `/teacher` | 1 |
+| **Total** | **46** |
+
+The count includes application route handlers only. It excludes Express middleware mounts and static asset URLs such as `/css/style.css` and `/js/admin-nav.js`.
+
+## HTTP endpoints
+
+`:slug` and `:id` are path parameters. The browser-facing routes generally return HTML or a redirect, not JSON.
+
+### Application and health
+
+| Method | Path | Access | Behavior |
+| --- | --- | --- | --- |
+| `GET` | `/` | Public | Render the homepage when signed out; redirect an authenticated user to their role dashboard. |
+| `GET` | `/health` | Public | Return JSON containing application status and MongoDB connection status. |
+
+Health response:
+
+```json
+{
+  "status": "ok",
+  "database": "connected"
+}
+```
+
+The `database` value can also be `"disconnected"`.
+
+### Authentication
+
+| Method | Path | Access | Behavior |
+| --- | --- | --- | --- |
+| `GET` | `/login` | Public | Render the student/teacher login page. |
+| `POST` | `/login` | Public | Validate credentials, record login activity, establish the session, then redirect to the student or teacher dashboard. |
+| `GET` | `/admin/login` | Public | Render the separate administrator login page. |
+| `POST` | `/admin/login` | Public | Validate administrator credentials, record login activity, establish the session, then redirect to `/admin`. |
+| `GET` | `/signup` | Public | Render the student/teacher account form. |
+| `POST` | `/signup` | Public | Start signup and issue a development OTP, or verify OTP/password and create the selected account. |
+| `POST` | `/logout` | Authenticated user | Destroy the session, clear the session cookie, and redirect to `/login`. |
+
+Common form fields:
+
+- Login: `email`, `password`.
+- Signup start: `role` (`STUDENT` or `TEACHER`), `firstName`, `lastName`, `email`, `phone`.
+- Signup verification: `role`, `firstName`, `lastName`, `email`, `phone`, `otp`, `password`, `confirmPassword`. The identity values must match the signup draft in the session.
+- Logout: no request body is required.
+
+### University directory
+
+| Method | Path | Access | Query / behavior |
+| --- | --- | --- | --- |
+| `GET` | `/colleges` | Public | Render a paginated university directory. Optional query parameters: `q` (name/city/state search), `state`, `course` (program search), and `page`. |
+| `GET` | `/colleges/:slug` | Public | Render the university detail page for the given slug; render a 404 page if it is not found. |
+
+### Admin workspace
+
+Every `/admin` endpoint requires an authenticated administrator. College administrators are limited to their assigned college where supported. All course and subject endpoints, college creation/archive, and the academic-structure page require `SUPER_ADMIN`.
+
+| Method | Path | Behavior |
+| --- | --- | --- |
+| `GET` | `/admin` | Dashboard statistics and recent activity. |
+| `GET` | `/admin/courses` | List courses. |
+| `POST` | `/admin/courses` | Create a course and its college availability links. |
+| `POST` | `/admin/courses/:id/update` | Update a course and availability. |
+| `POST` | `/admin/courses/:id/archive` | Archive a course. |
+| `GET` | `/admin/subjects` | List subjects. |
+| `POST` | `/admin/subjects` | Create a subject. |
+| `GET` | `/admin/colleges` | List colleges visible to the administrator. |
+| `POST` | `/admin/colleges` | Create a college (super-admin only). |
+| `POST` | `/admin/colleges/:id/update` | Update a college within the administrator's scope. |
+| `POST` | `/admin/colleges/:id/archive` | Archive a college (super-admin only). |
+| `GET` | `/admin/departments` | List departments; optional `college` query parameter filters by college. |
+| `POST` | `/admin/departments` | Create a department. |
+| `POST` | `/admin/departments/:id/update` | Update a department within the administrator's scope. |
+| `POST` | `/admin/departments/:id/archive` | Archive a department within the administrator's scope. |
+| `GET` | `/admin/students` | Search/filter and list students; supports `page`, `q`, `college`, `course`, and `semester` query parameters. |
+| `GET` | `/admin/students/new` | Render the new-student form. |
+| `GET` | `/admin/students/:id` | Render a student detail page. |
+| `GET` | `/admin/students/:id/edit` | Render the student edit form. |
+| `POST` | `/admin/students` | Create a student profile and login account. |
+| `POST` | `/admin/students/:id/update` | Update a student profile. |
+| `POST` | `/admin/students/:id/archive` | Archive a student and disable that student's login. |
+| `GET` | `/admin/teachers` | Search/filter and list teachers; supports `page`, `q`, `college`, and `department` query parameters. |
+| `GET` | `/admin/teachers/new` | Render the new-teacher form. |
+| `GET` | `/admin/teachers/:id` | Render a teacher detail page. |
+| `GET` | `/admin/teachers/:id/edit` | Render the teacher edit form. |
+| `POST` | `/admin/teachers` | Create a teacher profile and login account. |
+| `POST` | `/admin/teachers/:id/update` | Update a teacher profile. |
+| `POST` | `/admin/teachers/:id/archive` | Archive a teacher and disable that teacher's login. |
+| `GET` | `/admin/assignments` | List teaching assignments for review. |
+| `POST` | `/admin/assignments/:id/decision` | Approve or reject a teaching assignment. |
+| `GET` | `/admin/academic-structure` | View academic structure (super-admin only). |
+
+Admin create/update/action endpoints are HTML form submissions. Their field names are defined in the matching forms under `views/admin/`; successful or recoverable validation outcomes use flash messages and redirects.
+
+Common admin form fields, using the names expected by the current handlers:
+
+| Resource/action | Form fields |
+| --- | --- |
+| Courses | `name`, `code`, `description`, `department_id`, `duration_years`, `college_ids` (may be repeated for multiple colleges). |
+| Subjects | `code`, `name`, `credits`, `subject_type` (`CREDIT` or `NON_CREDIT`). |
+| Colleges | `university_id`, `name`, `city`, `state`, `website`, `phone`, `email`. |
+| Departments | `college_id` (super-admin selection), `name`, `description`. College admins use their assigned college. |
+| Students | `name`, `email`, `username`, `password`, `college_course_id`, `phone`, `student_id`, `department_id`, `semester_no`, `academic_year`, `enrollment_date`, `profile_image_url`. |
+| Teachers | `name`, `email`, `username`, `password`, `college_id`, `teacher_id`, `phone`, `department_id`, `specialization`, `designation`, `profile_image_url`, `skills`, `course_ids` (may be repeated for multiple courses). |
+| Assignment decision | `status` (`APPROVED` or `REJECTED`). |
+
+### Student and teacher portals
+
+| Method | Path | Access | Behavior |
+| --- | --- | --- | --- |
+| `GET` | `/student` | Student | Render the signed-in student's profile, subjects, and available subjects. |
+| `POST` | `/student/enroll` | Student | Enroll the student in an available subject. Form field: `semester_subject_id`. |
+| `GET` | `/teacher` | Teacher | Render the signed-in teacher's assignments. |
+
+## Calling the application
+
+The application expects browser-style URL-encoded form submissions rather than JSON request bodies. For example, a login form posts `email` and `password` to `/login`. The session cookie returned by Express must be retained by the browser for subsequent authenticated requests.
+
+The only current JSON endpoint is the health check:
+
+```powershell
+Invoke-RestMethod http://localhost:8000/health
+```
+
+There is no dedicated REST API for retrieving or managing users, courses, colleges, or assignments as JSON. Such an API would need separate JSON handlers, response schemas, and API-specific authorization/error behavior; the existing HTML handlers should not be assumed to return JSON.
+
+## Run locally
+
+From the project root, configure `.env` (see `.env.example`) and start the server:
+
+```powershell
+npm run dev
+```
+
+The default local address is `http://localhost:8000`. Set `PORT` to use another port. The server requires `SESSION_SECRET` and a reachable MongoDB URI (`MONGO_URI`, or the local default).
+
+Available package scripts:
+
+| Command | Purpose |
+| --- | --- |
+| `npm start` | Start with Node.js. |
+| `npm run dev` | Start with nodemon. |
+| `npm run db:seed` | Seed initial/demonstration data. |
+| `npm run admin:reset-password` | Update an existing administrator password using environment values. |
+
+The project currently uses EJS, custom CSS, and browser JavaScript; Bootstrap is not listed as a dependency in `package.json`.

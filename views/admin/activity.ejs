@@ -1,0 +1,105 @@
+<%- include("../partials/header", { title }) %>
+<div class="admin-shell">
+  <%- include("../partials/admin-sidebar", { activePage: "activity" }) %>
+  <div class="admin-content">
+    <div class="page-heading d-flex justify-content-between align-items-center mb-4">
+      <div>
+        <p class="eyebrow text-uppercase text-primary fw-bold mb-1">AUDIT &amp; SECURITY</p>
+        <h1 class="h2 mb-1">System Activity Logs</h1>
+        <p class="text-muted mb-0">Detailed administrative actions and user authentication events.</p>
+      </div>
+    </div>
+
+    <ul class="nav nav-tabs mb-4" id="logTabs" role="tablist">
+      <li class="nav-item">
+        <button class="nav-link active fw-bold" id="management-tab" data-bs-toggle="tab" data-bs-target="#managementLogsPane" type="button">
+          <i class="bi bi-gear-fill me-1"></i> Management Actions
+        </button>
+      </li>
+      <li class="nav-item">
+        <button class="nav-link fw-bold" id="login-tab" data-bs-toggle="tab" data-bs-target="#loginLogsPane" type="button">
+          <i class="bi bi-shield-lock-fill me-1"></i> Authentication Events
+        </button>
+      </li>
+    </ul>
+
+    <div class="tab-content" id="logTabsContent">
+      <!-- Management Tab -->
+      <div class="tab-pane fade show active" id="managementLogsPane" role="tabpanel">
+        <div class="card shadow-sm border-0 rounded-3 bg-body">
+          <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+              <thead class="table-light">
+                <tr>
+                  <th>Actor / Admin</th>
+                  <th>Action</th>
+                  <th>Entity Type</th>
+                  <th>Entity Label</th>
+                  <th>Timestamp</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% if (managementLogs && managementLogs.length) { %>
+                  <% managementLogs.forEach(log => { %>
+                    <tr>
+                      <td>
+                        <strong><%= log.actorId ? log.actorId.name : "System" %></strong>
+                        <small class="d-block text-muted"><%= log.actorId ? log.actorId.email : "" %></small>
+                      </td>
+                      <td><span class="badge bg-primary-subtle text-primary text-uppercase"><%= log.action %></span></td>
+                      <td><span class="badge bg-secondary-subtle text-secondary"><%= log.entityType %></span></td>
+                      <td><%= log.entityLabel %></td>
+                      <td><small class="text-secondary"><%= new Date(log.createdAt).toLocaleString() %></small></td>
+                    </tr>
+                  <% }) %>
+                <% } else { %>
+                  <tr><td colspan="5" class="text-center py-4 text-muted">No management activity recorded.</td></tr>
+                <% } %>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Login Tab -->
+      <div class="tab-pane fade" id="loginLogsPane" role="tabpanel">
+        <div class="card shadow-sm border-0 rounded-3 bg-body">
+          <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+              <thead class="table-light">
+                <tr>
+                  <th>Username / Email</th>
+                  <th>Role</th>
+                  <th>Result</th>
+                  <th>IP Address</th>
+                  <th>Timestamp</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% if (loginLogs && loginLogs.length) { %>
+                  <% loginLogs.forEach(log => { %>
+                    <tr>
+                      <td><strong><%= log.username %></strong></td>
+                      <td><span class="badge bg-secondary-subtle text-secondary"><%= log.role %></span></td>
+                      <td>
+                        <span class="badge <%= log.success ? 'bg-success' : 'bg-danger' %>-subtle text-<%= log.success ? 'success' : 'danger' %>">
+                          <%= log.success ? "Success" : "Failed" %>
+                        </span>
+                      </td>
+                      <td><small class="text-secondary"><%= log.ipAddress || "Localhost" %></small></td>
+                      <td><small class="text-secondary"><%= new Date(log.createdAt).toLocaleString() %></small></td>
+                    </tr>
+                  <% }) %>
+                <% } else { %>
+                  <tr><td colspan="5" class="text-center py-4 text-muted">No login activity found.</td></tr>
+                <% } %>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<%- include("../partials/footer") %>
+

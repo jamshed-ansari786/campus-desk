@@ -1,0 +1,103 @@
+<%- include("../partials/header", { title: locals.title || "Login", isAuthPage: !locals.adminLogin }) %>
+<% if (locals.adminLogin) { %>
+<section class="admin-login-shell">
+  <div class="admin-login-story">
+    <p class="admin-login-kicker"><span></span> CAMPUSDESK ADMIN CONSOLE</p>
+    <h1>Your campus.<br><em>Under control.</em></h1>
+    <p class="admin-login-intro">A secure workspace to manage the people, programs, and day-to-day operations that keep your campus moving.</p>
+    <div class="admin-login-art" aria-hidden="true">
+      <div class="admin-art-sidebar"><span></span><span></span><span></span><span></span></div>
+      <div class="admin-art-content">
+        <div class="admin-art-top"><span></span><span></span></div>
+        <div class="admin-art-highlight"><span></span><span></span><span></span></div>
+        <div class="admin-art-columns"><span></span><span></span><span></span></div>
+        <div class="admin-art-lines"><span></span><span></span><span></span></div>
+      </div>
+      <span class="admin-art-orbit"></span>
+    </div>
+    <p class="admin-login-caption"><span aria-hidden="true">✦</span> One clear view of your campus</p>
+  </div>
+
+  <form class="panel auth-form admin-auth-form" method="POST" action="/admin/login" novalidate>
+    <div class="admin-form-mark" aria-hidden="true">C</div>
+    <p class="eyebrow">ADMINISTRATOR ACCESS</p>
+    <h2>Welcome back</h2>
+    <p class="muted">Sign in with your administrator account to continue.</p>
+    <% if (locals.formError) { %><div class="form-error-summary" role="alert"><%= locals.formError %></div><% } %>
+    <label>Email address
+      <input name="email" type="email" value="<%= (locals.formData || {}).email || '' %>" autocomplete="email" maxlength="180" required aria-describedby="error-email" placeholder="you@campus.edu">
+      <small id="error-email" class="field-error" data-error-for="email"><%= (locals.fieldErrors || {}).email || "" %></small>
+    </label>
+    <label>Password
+      <input type="password" name="password" autocomplete="current-password" required aria-describedby="error-password" placeholder="Enter your password">
+      <small id="error-password" class="field-error" data-error-for="password"><%= (locals.fieldErrors || {}).password || "" %></small>
+    </label>
+    <button class="button primary full" type="submit">Sign in to admin <span aria-hidden="true">→</span></button>
+    <p class="muted center"><a href="/forgot-password">Forgot password?</a></p>
+    <p class="admin-form-footnote"><span aria-hidden="true">▣</span> Secure administrator sign-in</p>
+    <p class="muted center"><a href="/login">Go to student and teacher login</a></p>
+  </form>
+</section>
+<% } else { %>
+<section class="admin-login-shell auth-page-shell">
+  <div class="admin-login-story">
+    <p class="admin-login-kicker"><span></span> CAMPUSDESK STUDENT &amp; TEACHER PORTAL</p>
+    <h1>Your campus.<br><em>All in one place.</em></h1>
+    <p class="admin-login-intro">Sign in to stay connected to your learning, your campus, and the people helping you grow.</p>
+    <div class="admin-login-art" aria-hidden="true">
+      <div class="admin-art-sidebar"><span></span><span></span><span></span><span></span></div>
+      <div class="admin-art-content">
+        <div class="admin-art-top"><span></span><span></span></div>
+        <div class="admin-art-highlight"><span></span><span></span><span></span></div>
+        <div class="admin-art-columns"><span></span><span></span><span></span></div>
+        <div class="admin-art-lines"><span></span><span></span><span></span></div>
+      </div>
+      <span class="admin-art-orbit"></span>
+    </div>
+    <p class="admin-login-caption"><span aria-hidden="true">✦</span> One clear place for your campus journey</p>
+  </div>
+
+  <form class="panel auth-form admin-auth-form auth-page-form" method="POST" action="/login" novalidate>
+    <div class="admin-form-mark" aria-hidden="true">C</div>
+    <p class="eyebrow">PORTAL ACCESS</p>
+    <h2>Welcome back</h2>
+    <p class="muted">Use the email address associated with your account.</p>
+    <% if (locals.formError) { %><div class="form-error-summary" role="alert"><%= locals.formError %></div><% } %>
+    <label>Email address
+      <input name="email" type="email" value="<%= (locals.formData || {}).email || '' %>" autocomplete="email" maxlength="180" required aria-describedby="error-email" placeholder="you@campus.edu">
+      <small id="error-email" class="field-error" data-error-for="email"><%= (locals.fieldErrors || {}).email || "" %></small>
+    </label>
+    <label>Password
+      <input type="password" name="password" autocomplete="current-password" required aria-describedby="error-password" placeholder="Enter your password">
+      <small id="error-password" class="field-error" data-error-for="password"><%= (locals.fieldErrors || {}).password || "" %></small>
+    </label>
+    <button class="button primary full" type="submit">Login securely <span aria-hidden="true">→</span></button>
+    <p class="muted center"><a href="/forgot-password">Forgot password?</a></p>
+    <p class="admin-form-footnote"><span aria-hidden="true">▣</span> Secure student and teacher sign-in</p>
+    <p class="muted center">New to CampusDesk? <a href="/signup">Create an account</a> · <a href="/admin/login">Admin login</a></p>
+  </form>
+</section>
+<% } %>
+<script>
+  (() => {
+    const form = document.querySelector(".auth-form");
+    if (!form) return;
+    const validate = (input) => {
+      const node = form.querySelector(`[data-error-for="${input.name}"]`);
+      let message = "";
+      if (!input.value.trim()) message = "This field is required.";
+      else if (input.name === "email" && !/^[^\s@]+@[^\s@]+\.[A-Za-z]{2,}$/.test(input.value.trim())) message = "Enter a valid email address.";
+      if (node) node.textContent = message;
+      input.setAttribute("aria-invalid", message ? "true" : "false");
+      return !message;
+    };
+    form.querySelectorAll("input").forEach((input) => input.addEventListener("input", () => validate(input)));
+    form.addEventListener("submit", (event) => {
+      if (![...form.querySelectorAll("input")].map(validate).every(Boolean)) {
+        event.preventDefault();
+        form.querySelector('[aria-invalid="true"]')?.focus();
+      }
+    });
+  })();
+</script>
+<%- include("../partials/footer") %>

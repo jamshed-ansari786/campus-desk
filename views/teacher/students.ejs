@@ -1,0 +1,61 @@
+<%- include("../partials/header", { title }) %>
+<div class="container py-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <p class="text-uppercase text-primary fw-bold mb-1 small">ROSTER</p>
+      <h1 class="h2 mb-1">My Students</h1>
+      <p class="text-muted mb-0">View all students enrolled in your active classes and courses.</p>
+    </div>
+    <a href="/chat" class="btn btn-outline-primary rounded-pill d-flex align-items-center gap-1">
+      <i class="bi bi-chat-dots-fill"></i> Message Students
+    </a>
+  </div>
+
+  <div class="card shadow-sm border-0 rounded-3 bg-body">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>Student Name</th>
+            <th>Email</th>
+            <th>Enrolled Subject</th>
+            <th>Academic Year</th>
+            <th>Status</th>
+            <th class="text-end">Direct Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% if (students && students.length) { %>
+            <% students.forEach(student => { %>
+              <tr>
+                <td>
+                  <strong class="d-block"><%= student.name %></strong>
+                  <small class="text-muted"><%= student.studentId || "-" %></small>
+                </td>
+                <td><%= student.email %></td>
+                <td><span class="badge bg-primary-subtle text-primary"><%= student.subjectName %></span></td>
+                <td><%= student.academicYear || "Current" %></td>
+                <td>
+                  <span class="badge <%= student.status === 'ACTIVE' ? 'bg-success' : 'bg-secondary' %>-subtle text-<%= student.status === 'ACTIVE' ? 'success' : 'secondary' %>">
+                    <%= student.status %>
+                  </span>
+                </td>
+                <td class="text-end">
+                  <a href="/chat" class="btn btn-sm btn-outline-primary rounded-pill">
+                    <i class="bi bi-chat-fill me-1"></i> Chat
+                  </a>
+                </td>
+              </tr>
+            <% }) %>
+          <% } else { %>
+            <tr>
+              <td colspan="6" class="text-center py-4 text-muted">No students currently enrolled in your classes.</td>
+            </tr>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+<%- include("../partials/footer") %>
+

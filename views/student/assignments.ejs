@@ -1,0 +1,100 @@
+<%- include("../partials/header", { title }) %>
+<div class="container py-4">
+  <div class="mb-4">
+    <a href="/student" class="text-decoration-none small text-muted"><i class="bi bi-arrow-left"></i> Back to Dashboard</a>
+    <h1 class="h2 mt-2 mb-1">Coursework &amp; Assignments</h1>
+    <p class="text-muted mb-0">Track deadlines, submit assignments, and view teacher grading and feedback.</p>
+  </div>
+
+  <div class="row g-4">
+    <% if (assignments && assignments.length) { %>
+      <% assignments.forEach(a => { %>
+        <div class="col-12 col-md-6">
+          <div class="card shadow-sm border-0 rounded-3 p-3 h-100 bg-body d-flex flex-column <%= a.isOverdue ? 'border-start border-4 border-danger' : '' %>">
+            <div class="d-flex justify-content-between align-items-start mb-2">
+              <span class="badge bg-primary-subtle text-primary"><%= a.semesterSubjectId?.subjectId?.name || "Subject" %></span>
+              <% if (a.submission) { %>
+                <span class="badge bg-success-subtle text-success"><i class="bi bi-check-circle-fill me-1"></i> Submitted</span>
+              <% } else if (a.isOverdue) { %>
+                <span class="badge bg-danger-subtle text-danger"><i class="bi bi-exclamation-triangle-fill me-1"></i> Overdue</span>
+              <% } else { %>
+                <span class="badge bg-warning-subtle text-warning">Pending Submission</span>
+              <% } %>
+            </div>
+
+            <h5 class="fw-bold mb-1"><%= a.title %></h5>
+            <p class="text-muted small flex-grow-1"><%= a.description || "No instructions provided." %></p>
+
+            <div class="border-top pt-2 mt-2">
+              <div class="d-flex justify-content-between text-secondary small mb-2">
+                <span><i class="bi bi-clock me-1"></i> Due: <%= new Date(a.dueDate).toLocaleDateString() %></span>
+                <span>Max: <strong><%= a.maxMarks %> Marks</strong></span>
+              </div>
+
+              <% if (a.submission) { %>
+                <div class="alert alert-light border small mb-2 p-2">
+                  <div class="d-flex justify-content-between">
+                    <strong>Your Submission:</strong>
+                    <time class="text-muted"><%= new Date(a.submission.submittedAt).toLocaleDateString() %></time>
+                  </div>
+                  <div class="text-truncate my-1"><%= a.submission.submissionText || a.submission.fileUrl %></div>
+                  
+                  <% if (a.submission.marksObtained !== null) { %>
+                    <div class="d-flex justify-content-between align-items-center mt-2 pt-1 border-top">
+                      <span class="text-success fw-bold">Score: <%= a.submission.marksObtained %> / <%= a.maxMarks %></span>
+                      <small class="text-muted fst-italic"><%= a.submission.feedback || "Good job!" %></small>
+                    </div>
+                  <% } else { %>
+                    <div class="text-secondary small fst-italic">Awaiting teacher grading.</div>
+                  <% } %>
+                </div>
+              <% } %>
+
+              <div class="text-end">
+                <button class="btn btn-sm <%= a.submission ? 'btn-outline-secondary' : 'btn-primary' %> rounded-pill" data-bs-toggle="modal" data-bs-target="#submitModal_<%= a._id %>">
+                  <i class="bi bi-upload me-1"></i> <%= a.submission ? 'Resubmit Work' : 'Submit Assignment' %>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Submit Modal -->
+        <div class="modal fade" id="submitModal_<%= a._id %>" tabindex="-1">
+          <div class="modal-dialog">
+            <div class="modal-content">
+              <form method="POST" action="/student/assignments/<%= a._id %>/submit">
+                <div class="modal-header">
+                  <h5 class="modal-title">Submit: <%= a.title %></h5>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                  <div class="mb-3">
+                    <label class="form-label">Submission Text / Answers</label>
+                    <textarea name="submissionText" class="form-control" rows="4" placeholder="Type your answers, explanation, or summary..."><%= a.submission ? a.submission.submissionText : '' %></textarea>
+                  </div>
+                  <div class="mb-3">
+                    <label class="form-label">External Link / Project Repository (Optional)</label>
+                    <input type="url" name="fileUrl" class="form-control" placeholder="https://github.com/... or Google Drive link" value="<%= a.submission ? a.submission.fileUrl : '' %>">
+                  </div>
+                </div>
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-secondary rounded-pill" data-bs-dismiss="modal">Cancel</button>
+                  <button type="submit" class="btn btn-primary rounded-pill">Turn In Assignment</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      <% }) %>
+    <% } else { %>
+      <div class="col-12 text-center py-5 text-muted">
+        <i class="bi bi-journal-check fs-1 text-secondary d-block mb-2"></i>
+        <h5>No active assignments for your subjects.</h5>
+        <p class="small text-muted">Check back later when teachers post coursework.</p>
+      </div>
+    <% } %>
+  </div>
+</div>
+<%- include("../partials/footer") %>
+

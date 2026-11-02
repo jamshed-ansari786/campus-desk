@@ -1,0 +1,144 @@
+<%- include("../partials/header", { title }) %>
+<div class="container py-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <p class="text-uppercase text-primary fw-bold mb-1 small">FACULTY PORTAL</p>
+      <h1 class="h2 mb-1">Teacher Dashboard</h1>
+      <p class="text-muted mb-0">Welcome back, <%= currentUser.name %>. Manage classes, track attendance, and grade assignments.</p>
+    </div>
+    <div class="d-flex gap-2">
+      <a href="/teacher/attendance" class="btn btn-primary rounded-pill d-flex align-items-center gap-1">
+        <i class="bi bi-calendar-check"></i> Mark Attendance
+      </a>
+      <a href="/teacher/assignments" class="btn btn-outline-primary rounded-pill d-flex align-items-center gap-1">
+        <i class="bi bi-journal-plus"></i> New Assignment
+      </a>
+    </div>
+  </div>
+
+  <!-- KPI Cards -->
+  <div class="row g-3 mb-4">
+    <div class="col-md-3">
+      <div class="card shadow-sm border-0 p-3 rounded-3 bg-body">
+        <span class="text-muted small">Assigned Subjects</span>
+        <h3 class="fw-bold my-1 text-primary"><%= stats.totalSubjects %></h3>
+        <span class="text-muted small">Approved allocations</span>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card shadow-sm border-0 p-3 rounded-3 bg-body">
+        <span class="text-muted small">Enrolled Students</span>
+        <h3 class="fw-bold my-1 text-success"><%= stats.totalStudents %></h3>
+        <span class="text-muted small">Across all subjects</span>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card shadow-sm border-0 p-3 rounded-3 bg-body">
+        <span class="text-muted small">Course Assignments</span>
+        <h3 class="fw-bold my-1 text-secondary"><%= stats.totalAssignments %></h3>
+        <span class="text-muted small">Published assignments</span>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card shadow-sm border-0 p-3 rounded-3 bg-body border-start border-4 border-warning">
+        <span class="text-muted small">Pending Grading</span>
+        <h3 class="fw-bold my-1 text-warning"><%= stats.pendingSubmissions %></h3>
+        <span class="text-muted small">Submissions needing marks</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quick Feature Links -->
+  <div class="row g-3 mb-4">
+    <div class="col-md-4">
+      <a href="/teacher/attendance" class="text-decoration-none text-body">
+        <div class="card shadow-sm border-0 p-3 h-100 bg-body rounded-3 hover-card">
+          <i class="bi bi-calendar-check-fill text-success fs-3 mb-2"></i>
+          <h5 class="fw-bold mb-1">Daily Attendance</h5>
+          <p class="text-muted small mb-0">Record student presence, absence, late arrivals, and excuses by subject.</p>
+        </div>
+      </a>
+    </div>
+    <div class="col-md-4">
+      <a href="/teacher/grades" class="text-decoration-none text-body">
+        <div class="card shadow-sm border-0 p-3 h-100 bg-body rounded-3 hover-card">
+          <i class="bi bi-award-fill text-primary fs-3 mb-2"></i>
+          <h5 class="fw-bold mb-1">Gradebook &amp; Exams</h5>
+          <p class="text-muted small mb-0">Post midterm and final examination marks, letter grades, and feedback.</p>
+        </div>
+      </a>
+    </div>
+    <div class="col-md-4">
+      <a href="/chat" class="text-decoration-none text-body">
+        <div class="card shadow-sm border-0 p-3 h-100 bg-body rounded-3 hover-card">
+          <i class="bi bi-chat-quote-fill text-info fs-3 mb-2"></i>
+          <h5 class="fw-bold mb-1">Student Consultation Chat</h5>
+          <p class="text-muted small mb-0">Chat securely in real-time with enrolled students and campus administrators.</p>
+        </div>
+      </a>
+    </div>
+  </div>
+
+  <!-- Allocated Subjects Table -->
+  <div class="card shadow-sm border-0 rounded-3 mb-4 bg-body">
+    <div class="card-header bg-body border-bottom py-3 d-flex justify-content-between align-items-center">
+      <h5 class="fw-bold mb-0"><i class="bi bi-book-fill text-primary me-2"></i>My Teaching Allocations</h5>
+    </div>
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>Subject Name</th>
+            <th>Code</th>
+            <th>Credits</th>
+            <th>Semester</th>
+            <th>Course</th>
+            <th>Campus</th>
+            <th class="text-end">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% if (subjects && subjects.length) { %>
+            <% subjects.forEach(s => { %>
+              <tr>
+                <td><strong><%= s.subjectName %></strong></td>
+                <td><span class="badge bg-secondary-subtle text-secondary"><%= s.subjectCode %></span></td>
+                <td><%= s.credits %> Credits</td>
+                <td>Semester <%= s.semesterNo || 1 %></td>
+                <td><%= s.courseName %></td>
+                <td><%= s.collegeName %></td>
+                <td class="text-end">
+                  <a href="/teacher/attendance?subjectId=<%= s.semesterSubjectId %>" class="btn btn-sm btn-outline-success rounded-pill me-1">Attendance</a>
+                  <a href="/teacher/grades?subjectId=<%= s.semesterSubjectId %>" class="btn btn-sm btn-outline-primary rounded-pill">Grades</a>
+                </td>
+              </tr>
+            <% }) %>
+          <% } else { %>
+            <tr>
+              <td colspan="7" class="text-center py-4 text-muted">No approved subject allocations yet. Contact your campus administrator.</td>
+            </tr>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Recent Announcements -->
+  <% if (announcements && announcements.length) { %>
+    <div class="card shadow-sm border-0 rounded-3 p-3 bg-body">
+      <h6 class="fw-bold mb-3"><i class="bi bi-megaphone-fill text-warning me-2"></i>Recent Campus Broadcasts</h6>
+      <div class="list-group list-group-flush">
+        <% announcements.forEach(a => { %>
+          <div class="list-group-item px-0 py-2 border-bottom bg-transparent">
+            <div class="d-flex justify-content-between align-items-center">
+              <strong class="small"><%= a.title %></strong>
+              <small class="text-secondary"><%= new Date(a.createdAt).toLocaleDateString() %></small>
+            </div>
+            <p class="text-muted small mb-0"><%= a.content %></p>
+          </div>
+        <% }) %>
+      </div>
+    </div>
+  <% } %>
+</div>
+<%- include("../partials/footer") %>

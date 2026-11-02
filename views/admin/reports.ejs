@@ -1,0 +1,127 @@
+<%- include("../partials/header", { title }) %>
+<div class="admin-shell">
+  <%- include("../partials/admin-sidebar", { activePage: "reports" }) %>
+  <div class="admin-content">
+    <div class="page-heading d-flex justify-content-between align-items-center mb-4">
+      <div>
+        <p class="eyebrow text-uppercase text-primary fw-bold mb-1">DATA INTELLIGENCE</p>
+        <h1 class="h2 mb-1">Reports &amp; Analytics</h1>
+        <p class="text-muted mb-0">Generate and export downloadable Excel and PDF reports with real-time filters.</p>
+      </div>
+    </div>
+
+    <!-- Summary KPI cards -->
+    <div class="row g-3 mb-4">
+      <div class="col-md-3">
+        <div class="card shadow-sm border-0 p-3 bg-body rounded-3">
+          <span class="text-muted small">Total Students</span>
+          <h3 class="fw-bold my-1 text-primary"><%= stats.totalStudents %></h3>
+          <span class="text-muted small">Active in database</span>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="card shadow-sm border-0 p-3 bg-body rounded-3">
+          <span class="text-muted small">Attendance Entries</span>
+          <h3 class="fw-bold my-1 text-success"><%= stats.totalAttendance %></h3>
+          <span class="text-muted small">Logged records</span>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="card shadow-sm border-0 p-3 bg-body rounded-3">
+          <span class="text-muted small">Fee Collections</span>
+          <h3 class="fw-bold my-1 text-success">$<%= stats.paidFees.toLocaleString() %></h3>
+          <span class="text-danger small">Outstanding: $<%= stats.outstandingFees.toLocaleString() %></span>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="card shadow-sm border-0 p-3 bg-body rounded-3">
+          <span class="text-muted small">Examination Marks</span>
+          <h3 class="fw-bold my-1 text-info"><%= stats.totalGrades %></h3>
+          <span class="text-muted small">Graded entries</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Export Action Cards -->
+    <h4 class="fw-bold mb-3">Instant Report Downloads</h4>
+    <div class="row g-4 mb-4">
+      <!-- 1. Student Roster -->
+      <div class="col-md-6 col-lg-3">
+        <div class="card shadow-sm border-0 p-3 h-100 bg-body rounded-3">
+          <div class="d-flex align-items-center gap-2 mb-2">
+            <span class="fs-4 text-primary"><i class="bi bi-people-fill"></i></span>
+            <h6 class="fw-bold mb-0">Students Roster</h6>
+          </div>
+          <p class="text-muted small flex-grow-1">Complete list of enrolled students, email addresses, course allocations, and active status.</p>
+          <div class="d-flex gap-2 mt-2">
+            <a href="/admin/reports/students/excel" class="btn btn-sm btn-outline-success flex-fill rounded-pill d-flex align-items-center justify-content-center gap-1">
+              <i class="bi bi-file-earmark-excel"></i> Excel
+            </a>
+            <a href="/admin/reports/students/pdf" class="btn btn-sm btn-outline-danger flex-fill rounded-pill d-flex align-items-center justify-content-center gap-1">
+              <i class="bi bi-file-earmark-pdf"></i> PDF
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- 2. Attendance Summary -->
+      <div class="col-md-6 col-lg-3">
+        <div class="card shadow-sm border-0 p-3 h-100 bg-body rounded-3">
+          <div class="d-flex align-items-center gap-2 mb-2">
+            <span class="fs-4 text-success"><i class="bi bi-calendar-check-fill"></i></span>
+            <h6 class="fw-bold mb-0">Attendance Report</h6>
+          </div>
+          <p class="text-muted small flex-grow-1">Detailed session logs, dates, subject mappings, present/absent counts, and teacher remarks.</p>
+          <div class="d-flex gap-2 mt-2">
+            <a href="/admin/reports/attendance/excel" class="btn btn-sm btn-outline-success flex-fill rounded-pill d-flex align-items-center justify-content-center gap-1">
+              <i class="bi bi-file-earmark-excel"></i> Excel
+            </a>
+            <a href="/admin/reports/attendance/pdf" class="btn btn-sm btn-outline-danger flex-fill rounded-pill d-flex align-items-center justify-content-center gap-1">
+              <i class="bi bi-file-earmark-pdf"></i> PDF
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- 3. Fee Ledgers -->
+      <div class="col-md-6 col-lg-3">
+        <div class="card shadow-sm border-0 p-3 h-100 bg-body rounded-3">
+          <div class="d-flex align-items-center gap-2 mb-2">
+            <span class="fs-4 text-warning"><i class="bi bi-cash-stack"></i></span>
+            <h6 class="fw-bold mb-0">Fee &amp; Collections</h6>
+          </div>
+          <p class="text-muted small flex-grow-1">Course fee balances, payment status, receipts, and breakdown of paid and pending dues.</p>
+          <div class="d-flex gap-2 mt-2">
+            <a href="/admin/reports/fees/excel" class="btn btn-sm btn-outline-success flex-fill rounded-pill d-flex align-items-center justify-content-center gap-1">
+              <i class="bi bi-file-earmark-excel"></i> Excel
+            </a>
+            <a href="/admin/reports/fees/pdf" class="btn btn-sm btn-outline-danger flex-fill rounded-pill d-flex align-items-center justify-content-center gap-1">
+              <i class="bi bi-file-earmark-pdf"></i> PDF
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- 4. Academic Grades -->
+      <div class="col-md-6 col-lg-3">
+        <div class="card shadow-sm border-0 p-3 h-100 bg-body rounded-3">
+          <div class="d-flex align-items-center gap-2 mb-2">
+            <span class="fs-4 text-info"><i class="bi bi-award-fill"></i></span>
+            <h6 class="fw-bold mb-0">Academic Grades</h6>
+          </div>
+          <p class="text-muted small flex-grow-1">Subject examination results, midterm/final scores, max marks, and letter grade transcripts.</p>
+          <div class="d-flex gap-2 mt-2">
+            <a href="/admin/reports/grades/excel" class="btn btn-sm btn-outline-success flex-fill rounded-pill d-flex align-items-center justify-content-center gap-1">
+              <i class="bi bi-file-earmark-excel"></i> Excel
+            </a>
+            <a href="/admin/reports/grades/pdf" class="btn btn-sm btn-outline-danger flex-fill rounded-pill d-flex align-items-center justify-content-center gap-1">
+              <i class="bi bi-file-earmark-pdf"></i> PDF
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<%- include("../partials/footer") %>
+

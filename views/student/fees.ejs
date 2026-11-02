@@ -1,0 +1,74 @@
+<%- include("../partials/header", { title }) %>
+<div class="container py-4">
+  <div class="mb-4">
+    <a href="/student" class="text-decoration-none small text-muted"><i class="bi bi-arrow-left"></i> Back to Dashboard</a>
+    <h1 class="h2 mt-2 mb-1">Tuition Fee Ledger</h1>
+    <p class="text-muted mb-0">Review course tuition fees, payments history, and remaining balances.</p>
+  </div>
+
+  <!-- Summary Cards -->
+  <div class="row g-3 mb-4">
+    <div class="col-md-4">
+      <div class="card shadow-sm border-0 p-3 rounded-3 bg-body">
+        <span class="text-muted small">Total Program Tuition</span>
+        <h3 class="fw-bold my-1 text-primary">$<%= Number(feeRecord.totalAmount).toLocaleString() %></h3>
+        <span class="text-muted small">Academic Year: <%= feeRecord.academicYear || "Current" %></span>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card shadow-sm border-0 p-3 rounded-3 bg-body">
+        <span class="text-muted small">Total Paid to Date</span>
+        <h3 class="fw-bold my-1 text-success">$<%= Number(feeRecord.paidAmount).toLocaleString() %></h3>
+        <span class="text-muted small">Verified receipts</span>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card shadow-sm border-0 p-3 rounded-3 bg-body border-start border-4 <%= outstanding > 0 ? 'border-danger' : 'border-success' %>">
+        <span class="text-muted small">Outstanding Balance</span>
+        <h3 class="fw-bold my-1 <%= outstanding > 0 ? 'text-danger' : 'text-success' %>">$<%= Number(outstanding).toLocaleString() %></h3>
+        <span class="badge <%= feeRecord.status === 'PAID' ? 'bg-success' : 'bg-warning' %>-subtle text-<%= feeRecord.status === 'PAID' ? 'success' : 'warning' %>">
+          Status: <%= feeRecord.status %>
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Transaction History Table -->
+  <div class="card shadow-sm border-0 rounded-3 bg-body">
+    <div class="card-header bg-body border-bottom py-3">
+      <h5 class="fw-bold mb-0"><i class="bi bi-receipt text-primary me-2"></i>Payment Transaction Receipts</h5>
+    </div>
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>Date</th>
+            <th>Receipt / Reference</th>
+            <th>Payment Method</th>
+            <th>Amount Paid</th>
+            <th>Notes</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% if (feeRecord && feeRecord.transactions && feeRecord.transactions.length) { %>
+            <% feeRecord.transactions.forEach(t => { %>
+              <tr>
+                <td><strong><%= new Date(t.paidAt).toLocaleDateString() %></strong></td>
+                <td><code><%= t.transactionRef || "REC-" + String(t._id).slice(-6) %></code></td>
+                <td><span class="badge bg-secondary-subtle text-secondary"><%= t.paymentMethod %></span></td>
+                <td class="text-success fw-bold">+$<%= Number(t.amount).toLocaleString() %></td>
+                <td><small class="text-muted"><%= t.remarks || "Tuition fee instalment" %></small></td>
+              </tr>
+            <% }) %>
+          <% } else { %>
+            <tr>
+              <td colspan="5" class="text-center py-4 text-muted">No payment transactions recorded yet. Payments can be submitted via the finance administration desk.</td>
+            </tr>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+<%- include("../partials/footer") %>
+

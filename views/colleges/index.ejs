@@ -1,0 +1,61 @@
+<%- include("../partials/header", { title }) %>
+<section class="directory-hero">
+  <p class="eyebrow">INSTITUTION DIRECTORY</p>
+  <h1>Explore Indian universities</h1>
+  <p class="muted">Profiles, locations, official websites, and programs supported by published sources.</p>
+</section>
+
+<form class="panel directory-filters" method="GET" action="/colleges">
+  <label>Search by university or location
+    <input type="search" name="q" value="<%= filters.search %>" placeholder="e.g. Delhi, University of Delhi">
+  </label>
+  <label>State
+    <select name="state">
+      <option value="">All states</option>
+      <% states.forEach(value => { %><option value="<%= value %>" <%= filters.state === value ? "selected" : "" %>><%= value %></option><% }) %>
+    </select>
+  </label>
+  <label>Program
+    <select name="course">
+      <option value="">All programs</option>
+      <% programs.forEach(value => { %><option value="<%= value %>" <%= filters.course === value ? "selected" : "" %>><%= value %></option><% }) %>
+    </select>
+  </label>
+  <button class="button primary" type="submit">Search</button>
+</form>
+
+<p class="directory-count"><%= pagination.total %> institution<%= pagination.total === 1 ? "" : "s" %> found</p>
+<section class="university-grid">
+  <% institutions.forEach(institution => { %>
+    <article class="university-card">
+      <a class="university-card-link" href="/colleges/<%= institution.slug %>">
+        <% if (institution.logoUrl) { %>
+          <img class="university-logo" src="<%= institution.logoUrl %>" alt="<%= institution.name %> logo" loading="lazy">
+        <% } else { %>
+          <span class="university-mark" aria-hidden="true"><%= institution.name.slice(0, 1) %></span>
+        <% } %>
+        <span class="university-location"><%= [institution.city, institution.state].filter(Boolean).join(", ") || "Location unavailable" %></span>
+        <h2><%= institution.name %></h2>
+        <p><%= institution.description || "Description unavailable from the reviewed public sources." %></p>
+        <span class="university-program-count"><%= institution.programs.length %> verified program<%= institution.programs.length === 1 ? "" : "s" %></span>
+      </a>
+      <a class="university-website" href="<%= institution.officialWebsite %>" target="_blank" rel="noopener noreferrer">Official website ↗</a>
+    </article>
+  <% }) %>
+  <% if (!institutions.length) { %>
+    <div class="panel directory-empty"><h2>No matching universities</h2><p class="muted">Try changing your search or filters.</p></div>
+  <% } %>
+</section>
+
+<% if (pagination.pages > 1) { %>
+  <nav class="pagination" aria-label="University directory pages">
+    <% if (pagination.page > 1) { %>
+      <a class="button secondary" href="/colleges?q=<%= encodeURIComponent(filters.search) %>&state=<%= encodeURIComponent(filters.state) %>&course=<%= encodeURIComponent(filters.course) %>&page=<%= pagination.page - 1 %>">Previous</a>
+    <% } %>
+    <span>Page <%= pagination.page %> of <%= pagination.pages %></span>
+    <% if (pagination.page < pagination.pages) { %>
+      <a class="button secondary" href="/colleges?q=<%= encodeURIComponent(filters.search) %>&state=<%= encodeURIComponent(filters.state) %>&course=<%= encodeURIComponent(filters.course) %>&page=<%= pagination.page + 1 %>">Next</a>
+    <% } %>
+  </nav>
+<% } %>
+<%- include("../partials/footer") %>

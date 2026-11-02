@@ -1,0 +1,289 @@
+<%- include("../partials/header", { title }) %>
+<div class="admin-shell">
+  <%- include("../partials/admin-sidebar", { activePage: "overview" }) %>
+  <div class="admin-content">
+    <div class="page-heading d-flex justify-content-between align-items-center mb-4">
+      <div>
+        <p class="eyebrow text-uppercase text-primary fw-bold mb-1">ADMINISTRATION</p>
+        <h1 class="h2 mb-1">Admin Dashboard</h1>
+        <p class="text-muted mb-0">A single unified view of institution performance, academics, attendance, and finance.</p>
+      </div>
+      <div class="d-flex align-items-center gap-2">
+        <span class="badge bg-primary fs-6 px-3 py-2 rounded-pill"><%= currentUser.adminRole ? currentUser.adminRole.replace("_", " ") : "ADMIN" %></span>
+      </div>
+    </div>
+
+    <!-- Quick Stats Grid -->
+    <section class="row g-3 mb-4">
+      <div class="col-6 col-md-4 col-xl-2">
+        <div class="card h-100 shadow-sm border-0 bg-body rounded-3 p-3">
+          <span class="text-muted small">Total Students</span>
+          <h3 class="fw-bold my-1 text-primary"><%= stats.students %></h3>
+          <span class="text-success small"><i class="bi bi-people-fill"></i> Registered</span>
+        </div>
+      </div>
+      <div class="col-6 col-md-4 col-xl-2">
+        <div class="card h-100 shadow-sm border-0 bg-body rounded-3 p-3">
+          <span class="text-muted small">Total Teachers</span>
+          <h3 class="fw-bold my-1 text-info"><%= stats.teachers %></h3>
+          <span class="text-secondary small"><i class="bi bi-person-badge-fill"></i> Faculty</span>
+        </div>
+      </div>
+      <div class="col-6 col-md-4 col-xl-2">
+        <div class="card h-100 shadow-sm border-0 bg-body rounded-3 p-3">
+          <span class="text-muted small">Active Courses</span>
+          <h3 class="fw-bold my-1 text-secondary"><%= stats.courses %></h3>
+          <span class="text-muted small"><i class="bi bi-mortarboard-fill"></i> Programs</span>
+        </div>
+      </div>
+      <div class="col-6 col-md-4 col-xl-2">
+        <div class="card h-100 shadow-sm border-0 bg-body rounded-3 p-3">
+          <span class="text-muted small">Attendance Rate</span>
+          <h3 class="fw-bold my-1 text-success"><%= stats.attendanceRate %>%</h3>
+          <span class="text-success small"><i class="bi bi-calendar-check-fill"></i> Institution Avg</span>
+        </div>
+      </div>
+      <div class="col-6 col-md-4 col-xl-2">
+        <div class="card h-100 shadow-sm border-0 bg-body rounded-3 p-3">
+          <span class="text-muted small">Fees Collected</span>
+          <h3 class="fw-bold my-1 text-success">$<%= Number(stats.paidFees || 0).toLocaleString() %></h3>
+          <span class="text-muted small">of $<%= Number(stats.totalFees || 0).toLocaleString() %></span>
+        </div>
+      </div>
+      <div class="col-6 col-md-4 col-xl-2">
+        <div class="card h-100 shadow-sm border-0 bg-body rounded-3 p-3 border-start border-4 border-warning">
+          <span class="text-muted small">Pending Reviews</span>
+          <h3 class="fw-bold my-1 text-warning"><%= stats.pending %></h3>
+          <span class="text-danger small"><i class="bi bi-exclamation-circle-fill"></i> Action needed</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Interactive Charts Section -->
+    <section class="row g-4 mb-4">
+      <div class="col-12 col-lg-8">
+        <div class="card shadow-sm border-0 rounded-3 p-4 h-100 bg-body">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="fw-bold mb-0"><i class="bi bi-bar-chart-fill text-primary me-2"></i>Student Performance Distribution</h5>
+            <span class="badge bg-secondary-subtle text-secondary">Academic Grades</span>
+          </div>
+          <div style="height: 260px;">
+            <canvas id="performanceChart"></canvas>
+          </div>
+        </div>
+      </div>
+      <div class="col-12 col-lg-4">
+        <div class="card shadow-sm border-0 rounded-3 p-4 h-100 bg-body">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="fw-bold mb-0"><i class="bi bi-pie-chart-fill text-success me-2"></i>Attendance Ratio</h5>
+            <span class="badge bg-success-subtle text-success">Overall</span>
+          </div>
+          <div style="height: 260px;" class="d-flex align-items-center justify-content-center">
+            <canvas id="attendanceChart"></canvas>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Administrative Quick Access -->
+    <h4 class="fw-bold mb-3">Campus Operations</h4>
+    <section class="row g-3 mb-4">
+      <div class="col-md-6 col-lg-3">
+        <a href="/admin/reports" class="text-decoration-none text-body">
+          <div class="card shadow-sm border-0 p-3 h-100 hover-card bg-body">
+            <span class="text-primary fs-3 mb-2"><i class="bi bi-file-earmark-spreadsheet-fill"></i></span>
+            <h6 class="fw-bold mb-1">Reports &amp; Data Export</h6>
+            <p class="text-muted small mb-0">Generate Excel and PDF reports for students, fees, attendance, and grades.</p>
+          </div>
+        </a>
+      </div>
+      <div class="col-md-6 col-lg-3">
+        <a href="/admin/fees" class="text-decoration-none text-body">
+          <div class="card shadow-sm border-0 p-3 h-100 hover-card bg-body">
+            <span class="text-success fs-3 mb-2"><i class="bi bi-cash-coin"></i></span>
+            <h6 class="fw-bold mb-1">Course Fees</h6>
+            <p class="text-muted small mb-0">Track student tuition fee ledgers, record payments, and manage balances.</p>
+          </div>
+        </a>
+      </div>
+      <div class="col-md-6 col-lg-3">
+        <a href="/chat" class="text-decoration-none text-body">
+          <div class="card shadow-sm border-0 p-3 h-100 hover-card bg-body">
+            <span class="text-info fs-3 mb-2"><i class="bi bi-chat-quote-fill"></i></span>
+            <h6 class="fw-bold mb-1">Live Messages</h6>
+            <p class="text-muted small mb-0">Chat privately in real time with faculty teachers and enrolled students.</p>
+          </div>
+        </a>
+      </div>
+      <div class="col-md-6 col-lg-3">
+        <a href="/admin/announcements" class="text-decoration-none text-body">
+          <div class="card shadow-sm border-0 p-3 h-100 hover-card bg-body">
+            <span class="text-warning fs-3 mb-2"><i class="bi bi-megaphone-fill"></i></span>
+            <h6 class="fw-bold mb-1">Announcements</h6>
+            <p class="text-muted small mb-0">Broadcast instant notifications to all teachers, students, or entire campus.</p>
+          </div>
+        </a>
+      </div>
+    </section>
+
+    <!-- Recent Logs & Activities -->
+    <section class="row g-4">
+      <div class="col-md-4">
+        <div class="card shadow-sm border-0 rounded-3 p-3 h-100 bg-body">
+          <h6 class="fw-bold mb-3"><i class="bi bi-person-plus-fill text-primary me-2"></i>Recent Registrations</h6>
+          <% if (recentStudents.length) { %>
+            <div class="list-group list-group-flush">
+              <% recentStudents.forEach(student => { %>
+                <div class="list-group-item px-0 py-2 border-bottom bg-transparent">
+                  <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                      <strong class="d-block small"><%= student.name %></strong>
+                      <span class="text-muted small"><%= student.email %></span>
+                    </div>
+                    <time class="text-secondary small"><%= new Date(student.createdAt).toLocaleDateString() %></time>
+                  </div>
+                </div>
+              <% }) %>
+            </div>
+          <% } else { %>
+            <p class="text-muted small">No recent registrations.</p>
+          <% } %>
+        </div>
+      </div>
+
+      <div class="col-md-4">
+        <div class="card shadow-sm border-0 rounded-3 p-3 h-100 bg-body">
+          <h6 class="fw-bold mb-3"><i class="bi bi-shield-check text-success me-2"></i>Recent Logins</h6>
+          <% if (loginActivity.length) { %>
+            <div class="list-group list-group-flush">
+              <% loginActivity.forEach(item => { %>
+                <div class="list-group-item px-0 py-2 border-bottom bg-transparent">
+                  <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                      <strong class="d-block small"><%= item.role %> · <%= item.username %></strong>
+                      <span class="badge <%= item.success ? 'bg-success' : 'bg-danger' %>-subtle text-<%= item.success ? 'success' : 'danger' %> small">
+                        <%= item.success ? "Success" : "Failed" %>
+                      </span>
+                    </div>
+                    <time class="text-secondary small"><%= new Date(item.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) %></time>
+                  </div>
+                </div>
+              <% }) %>
+            </div>
+          <% } else { %>
+            <p class="text-muted small">No login history recorded.</p>
+          <% } %>
+        </div>
+      </div>
+
+      <div class="col-md-4">
+        <div class="card shadow-sm border-0 rounded-3 p-3 h-100 bg-body">
+          <h6 class="fw-bold mb-3"><i class="bi bi-clock-history text-info me-2"></i>Management Activities</h6>
+          <% if (managementActivity.length) { %>
+            <div class="list-group list-group-flush">
+              <% managementActivity.forEach(item => { %>
+                <div class="list-group-item px-0 py-2 border-bottom bg-transparent">
+                  <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                      <strong class="d-block small text-capitalize"><%= item.action %> <%= item.entityType.toLowerCase() %></strong>
+                      <span class="text-muted small"><%= item.entityLabel %></span>
+                    </div>
+                    <time class="text-secondary small"><%= new Date(item.createdAt).toLocaleDateString() %></time>
+                  </div>
+                </div>
+              <% }) %>
+            </div>
+          <% } else { %>
+            <p class="text-muted small">No management records found.</p>
+          <% } %>
+        </div>
+      </div>
+    </section>
+  </div>
+</div>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const dashboardCharts = [];
+    const updateChartTheme = () => {
+      const isDark = document.documentElement.getAttribute("data-theme") === "dark";
+      const textColor = isDark ? "#cbd5e1" : "#475569";
+      const gridColor = isDark ? "rgba(148, 163, 184, 0.18)" : "rgba(100, 116, 139, 0.12)";
+
+      dashboardCharts.forEach((chart) => {
+        chart.options.color = textColor;
+        chart.options.plugins.legend.labels = {
+          ...chart.options.plugins.legend.labels,
+          color: textColor,
+        };
+        Object.values(chart.options.scales || {}).forEach((scale) => {
+          scale.ticks = { ...scale.ticks, color: textColor };
+          scale.grid = { ...scale.grid, color: gridColor };
+        });
+        chart.update("none");
+      });
+    };
+
+    document.addEventListener("campusdesk:themechange", updateChartTheme);
+
+    // 1. Performance Chart
+    const perfCtx = document.getElementById("performanceChart")?.getContext("2d");
+    if (perfCtx) {
+      const grades = <%- JSON.stringify(chartData?.grades || { "A+": 12, "A": 25, "B": 18, "C": 8, "D": 4, "F": 2 }) %>;
+      dashboardCharts.push(new Chart(perfCtx, {
+        type: "bar",
+        data: {
+          labels: Object.keys(grades),
+          datasets: [{
+            label: "Students",
+            data: Object.values(grades),
+            backgroundColor: [
+              "rgba(79, 70, 229, 0.8)",
+              "rgba(59, 130, 246, 0.8)",
+              "rgba(16, 185, 129, 0.8)",
+              "rgba(245, 158, 11, 0.8)",
+              "rgba(249, 115, 22, 0.8)",
+              "rgba(239, 68, 68, 0.8)",
+            ],
+            borderRadius: 6,
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            y: { beginAtZero: true, grid: { color: "rgba(100, 116, 139, 0.12)" } },
+            x: { grid: { display: false } }
+          }
+        }
+      }));
+    }
+
+    // 2. Attendance Chart
+    const attCtx = document.getElementById("attendanceChart")?.getContext("2d");
+    if (attCtx) {
+      const attData = <%- JSON.stringify(chartData?.attendance || { present: 94, absent: 6 }) %>;
+      dashboardCharts.push(new Chart(attCtx, {
+        type: "doughnut",
+        data: {
+          labels: ["Present / Late", "Absent"],
+          datasets: [{
+            data: [attData.present || 94, attData.absent || 6],
+            backgroundColor: ["#10b981", "#ef4444"],
+            borderWidth: 2,
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { position: "bottom" } }
+        }
+      }));
+    }
+
+    updateChartTheme();
+  });
+</script>
+
+<%- include("../partials/footer") %>

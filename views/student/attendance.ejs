@@ -1,0 +1,81 @@
+<%- include("../partials/header", { title }) %>
+<div class="container py-4">
+  <div class="mb-4">
+    <a href="/student" class="text-decoration-none small text-muted"><i class="bi bi-arrow-left"></i> Back to Dashboard</a>
+    <h1 class="h2 mt-2 mb-1">My Attendance Log</h1>
+    <p class="text-muted mb-0">Detailed breakdown of class sessions, participation records, and attendance rate.</p>
+  </div>
+
+  <!-- KPI stats -->
+  <div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+      <div class="card shadow-sm border-0 p-3 rounded-3 bg-body">
+        <span class="text-muted small">Attendance Rate</span>
+        <h3 class="fw-bold my-1 text-success"><%= stats.percentage %>%</h3>
+        <span class="text-muted small">Institution Target: 75%</span>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="card shadow-sm border-0 p-3 rounded-3 bg-body">
+        <span class="text-muted small">Present Sessions</span>
+        <h3 class="fw-bold my-1 text-primary"><%= stats.present %></h3>
+        <span class="text-muted small">Classes attended</span>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="card shadow-sm border-0 p-3 rounded-3 bg-body">
+        <span class="text-muted small">Late Arrivals</span>
+        <h3 class="fw-bold my-1 text-warning"><%= stats.late %></h3>
+        <span class="text-muted small">Tardy entries</span>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="card shadow-sm border-0 p-3 rounded-3 bg-body">
+        <span class="text-muted small">Absences</span>
+        <h3 class="fw-bold my-1 text-danger"><%= stats.absent %></h3>
+        <span class="text-muted small">Unattended sessions</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Detailed Table -->
+  <div class="card shadow-sm border-0 rounded-3 bg-body">
+    <div class="card-header bg-body border-bottom py-3">
+      <h5 class="fw-bold mb-0"><i class="bi bi-calendar3 text-primary me-2"></i>Class-by-Class Attendance Records</h5>
+    </div>
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>Date</th>
+            <th>Subject</th>
+            <th>Status</th>
+            <th>Remarks</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% if (records && records.length) { %>
+            <% records.forEach(r => { %>
+              <tr>
+                <td><strong><%= new Date(r.date).toLocaleDateString() %></strong></td>
+                <td><%= r.semesterSubjectId?.subjectId?.name || "General Course Session" %></td>
+                <td>
+                  <span class="badge <%= r.status === 'PRESENT' ? 'bg-success' : r.status === 'LATE' ? 'bg-warning' : r.status === 'EXCUSED' ? 'bg-info' : 'bg-danger' %>-subtle text-<%= r.status === 'PRESENT' ? 'success' : r.status === 'LATE' ? 'warning' : r.status === 'EXCUSED' ? 'info' : 'danger' %>">
+                    <%= r.status %>
+                  </span>
+                </td>
+                <td><small class="text-muted"><%= r.remarks || "-" %></small></td>
+              </tr>
+            <% }) %>
+          <% } else { %>
+            <tr>
+              <td colspan="4" class="text-center py-4 text-muted">No attendance logs found yet.</td>
+            </tr>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+<%- include("../partials/footer") %>
+

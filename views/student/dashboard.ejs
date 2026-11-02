@@ -1,0 +1,177 @@
+<%- include("../partials/header", { title }) %>
+<div class="container py-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <p class="text-uppercase text-primary fw-bold mb-1 small">STUDENT DESK</p>
+      <h1 class="h2 mb-1">Welcome, <%= profile.name %></h1>
+      <p class="text-muted mb-0"><%= profile.course_name %> · <%= profile.college_name %></p>
+    </div>
+    <div class="d-flex gap-2">
+      <a href="/chat" class="btn btn-outline-primary rounded-pill d-flex align-items-center gap-1">
+        <i class="bi bi-chat-quote-fill"></i> Faculty Consultation
+      </a>
+    </div>
+  </div>
+
+  <!-- KPI Overview -->
+  <div class="row g-3 mb-4">
+    <div class="col-md-3">
+      <div class="card shadow-sm border-0 p-3 rounded-3 bg-body">
+        <span class="text-muted small">Attendance Rate</span>
+        <h3 class="fw-bold my-1 text-success"><%= stats.attendanceRate %>%</h3>
+        <span class="text-muted small"><%= stats.totalClasses %> recorded classes</span>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card shadow-sm border-0 p-3 rounded-3 bg-body">
+        <span class="text-muted small">Enrolled Subjects</span>
+        <h3 class="fw-bold my-1 text-primary"><%= stats.enrolledCount %></h3>
+        <span class="text-muted small">Active this term</span>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card shadow-sm border-0 p-3 rounded-3 bg-body">
+        <span class="text-muted small">Upcoming Assignments</span>
+        <h3 class="fw-bold my-1 text-warning"><%= stats.upcomingAssignmentsCount %></h3>
+        <span class="text-muted small">Need your submission</span>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card shadow-sm border-0 p-3 rounded-3 bg-body">
+        <span class="text-muted small">Tuition Fee Status</span>
+        <h3 class="fw-bold my-1 <%= feeRecord && feeRecord.status === 'PAID' ? 'text-success' : 'text-danger' %>">
+          <%= feeRecord ? feeRecord.status : 'PENDING' %>
+        </h3>
+        <span class="text-muted small">Balance: $<%= feeRecord ? Math.max(0, feeRecord.totalAmount - feeRecord.paidAmount) : 0 %></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quick Nav Actions -->
+  <div class="row g-3 mb-4">
+    <div class="col-md-3">
+      <a href="/student/attendance" class="text-decoration-none text-body">
+        <div class="card shadow-sm border-0 p-3 h-100 bg-body rounded-3 hover-card">
+          <i class="bi bi-calendar-check-fill text-success fs-3 mb-2"></i>
+          <h6 class="fw-bold mb-1">My Attendance</h6>
+          <p class="text-muted small mb-0">Check dates, subject attendance records, and percentage breakdown.</p>
+        </div>
+      </a>
+    </div>
+    <div class="col-md-3">
+      <a href="/student/assignments" class="text-decoration-none text-body">
+        <div class="card shadow-sm border-0 p-3 h-100 bg-body rounded-3 hover-card">
+          <i class="bi bi-journal-text text-primary fs-3 mb-2"></i>
+          <h6 class="fw-bold mb-1">Assignments</h6>
+          <p class="text-muted small mb-0">View upcoming homework deadlines, submit work, and read teacher feedback.</p>
+        </div>
+      </a>
+    </div>
+    <div class="col-md-3">
+      <a href="/student/grades" class="text-decoration-none text-body">
+        <div class="card shadow-sm border-0 p-3 h-100 bg-body rounded-3 hover-card">
+          <i class="bi bi-award-fill text-info fs-3 mb-2"></i>
+          <h6 class="fw-bold mb-1">Grades &amp; Results</h6>
+          <p class="text-muted small mb-0">Review midterm and final examination marks and letter grade transcript.</p>
+        </div>
+      </a>
+    </div>
+    <div class="col-md-3">
+      <a href="/student/fees" class="text-decoration-none text-body">
+        <div class="card shadow-sm border-0 p-3 h-100 bg-body rounded-3 hover-card">
+          <i class="bi bi-cash-stack text-warning fs-3 mb-2"></i>
+          <h6 class="fw-bold mb-1">Fee Ledger</h6>
+          <p class="text-muted small mb-0">View tuition fee payment receipts, paid sums, and outstanding dues.</p>
+        </div>
+      </a>
+    </div>
+  </div>
+
+  <!-- Enrolled Subjects Table & Self-Enrollment -->
+  <div class="row g-4 mb-4">
+    <div class="col-12 col-lg-8">
+      <div class="card shadow-sm border-0 rounded-3 bg-body h-100">
+        <div class="card-header bg-body border-bottom py-3 d-flex justify-content-between align-items-center">
+          <h5 class="fw-bold mb-0"><i class="bi bi-book-fill text-primary me-2"></i>My Enrolled Subjects</h5>
+          <span class="badge bg-primary-subtle text-primary"><%= subjects.length %> Courses</span>
+        </div>
+        <div class="table-responsive">
+          <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+              <tr>
+                <th>Subject</th>
+                <th>Code</th>
+                <th>Credits</th>
+                <th>Semester</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% if (subjects && subjects.length) { %>
+                <% subjects.forEach(s => { %>
+                  <tr>
+                    <td><strong><%= s.name %></strong></td>
+                    <td><span class="badge bg-secondary-subtle text-secondary"><%= s.code %></span></td>
+                    <td><%= s.credits %> Credits</td>
+                    <td>Semester <%= s.semester_no || 1 %></td>
+                    <td><span class="badge bg-success-subtle text-success"><%= s.enrollment_status %></span></td>
+                  </tr>
+                <% }) %>
+              <% } else { %>
+                <tr>
+                  <td colspan="5" class="text-center py-4 text-muted">You are not enrolled in any subjects yet.</td>
+                </tr>
+              <% } %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Enroll in available subject -->
+    <div class="col-12 col-lg-4">
+      <div class="card shadow-sm border-0 rounded-3 p-3 bg-body h-100">
+        <h5 class="fw-bold mb-2"><i class="bi bi-plus-circle-fill text-success me-2"></i>Subject Enrollment</h5>
+        <p class="text-muted small">Add available subjects for your semester to your academic curriculum.</p>
+        <% if (available && available.length) { %>
+          <form method="POST" action="/student/enroll">
+            <div class="mb-3">
+              <label class="form-label small fw-bold">Select Available Subject</label>
+              <select name="semester_subject_id" class="form-select" required>
+                <% available.forEach(sub => { %>
+                  <option value="<%= sub.semester_subject_id %>">
+                    <%= sub.name %> (<%= sub.code %>) - Sem <%= sub.semester_no %>
+                  </option>
+                <% }) %>
+              </select>
+            </div>
+            <button type="submit" class="btn btn-primary rounded-pill w-100">Enroll In Subject</button>
+          </form>
+        <% } else { %>
+          <div class="alert alert-secondary small mb-0">
+            All curriculum subjects for your program are already enrolled.
+          </div>
+        <% } %>
+      </div>
+    </div>
+  </div>
+
+  <!-- Announcements & Recent Notices -->
+  <% if (announcements && announcements.length) { %>
+    <div class="card shadow-sm border-0 rounded-3 p-3 bg-body">
+      <h6 class="fw-bold mb-3"><i class="bi bi-megaphone-fill text-warning me-2"></i>Campus Announcements</h6>
+      <div class="list-group list-group-flush">
+        <% announcements.forEach(a => { %>
+          <div class="list-group-item px-0 py-2 border-bottom bg-transparent">
+            <div class="d-flex justify-content-between align-items-center">
+              <strong class="small"><%= a.title %></strong>
+              <small class="text-secondary"><%= new Date(a.createdAt).toLocaleDateString() %></small>
+            </div>
+            <p class="text-muted small mb-0"><%= a.content %></p>
+          </div>
+        <% }) %>
+      </div>
+    </div>
+  <% } %>
+</div>
+<%- include("../partials/footer") %>

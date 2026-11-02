@@ -1,0 +1,158 @@
+<%- include("../partials/header", { title, isAuthPage: true }) %>
+<section class="admin-login-shell auth-page-shell signup-page-shell">
+  <div class="admin-login-story">
+    <p class="admin-login-kicker"><span></span> YOUR NEXT CHAPTER STARTS HERE</p>
+    <h1>Find your place.<br><em>Make it yours.</em></h1>
+    <p class="admin-login-intro">Create your CampusDesk account to explore your campus and bring your learning journey together.</p>
+    <div class="admin-login-art" aria-hidden="true">
+      <div class="admin-art-sidebar"><span></span><span></span><span></span><span></span></div>
+      <div class="admin-art-content">
+        <div class="admin-art-top"><span></span><span></span></div>
+        <div class="admin-art-highlight"><span></span><span></span><span></span></div>
+        <div class="admin-art-columns"><span></span><span></span><span></span></div>
+        <div class="admin-art-lines"><span></span><span></span><span></span></div>
+      </div>
+      <span class="admin-art-orbit"></span>
+    </div>
+    <p class="admin-login-caption"><span aria-hidden="true">✦</span> One account. A lot of possibility.</p>
+  </div>
+
+  <form class="panel auth-signup-form admin-auth-form auth-page-form" method="POST" action="/signup" novalidate>
+    <div class="admin-form-mark" aria-hidden="true">C</div>
+    <p class="eyebrow">JOIN CAMPUSDESK</p>
+    <h2><%= pendingOtp ? "Verify your account" : "Create account" %></h2>
+    <p class="muted">
+      <%= pendingOtp
+        ? `Enter the OTP and set a strong password. The code expires in ${otpExpiresInMinutes} minutes.`
+        : "Create a student or teacher account with your verified contact details." %>
+    </p>
+
+    <% if (formError) { %>
+      <div class="form-error-summary" role="alert"><%= formError %></div>
+    <% } %>
+
+    <% if (generatedOtp) { %>
+      <div class="otp-demo-notice" role="status">
+        <strong>Development OTP: <%= generatedOtp %></strong>
+        <span>For local testing only. An email/SMS provider is not configured.</span>
+      </div>
+    <% } %>
+
+    <% if (pendingOtp) { %>
+      <input type="hidden" name="role" value="<%= formData.role %>">
+      <input type="hidden" name="firstName" value="<%= formData.firstName %>">
+      <input type="hidden" name="lastName" value="<%= formData.lastName %>">
+      <input type="hidden" name="email" value="<%= formData.email %>">
+      <input type="hidden" name="phone" value="<%= formData.phone %>">
+      <p class="signup-identity">
+        <strong><%= formData.firstName %> <%= formData.lastName %></strong><br>
+        <%= formData.email %> · <%= formData.phone %> · <%= formData.role === "TEACHER" ? "Teacher" : "Student" %>
+      </p>
+      <div class="form-grid">
+        <label>OTP (6 digits)
+          <input name="otp" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]{6}" required aria-describedby="error-otp" placeholder="Enter 6-digit code">
+          <small id="error-otp" class="field-error" data-error-for="otp"><%= fieldErrors.otp || "" %></small>
+        </label>
+        <label>Password
+          <input name="password" type="password" autocomplete="new-password" minlength="8" maxlength="72" required aria-describedby="error-password" placeholder="At least 8 characters">
+          <small id="error-password" class="field-error" data-error-for="password"><%= fieldErrors.password || "" %></small>
+        </label>
+        <label>Confirm password
+          <input name="confirmPassword" type="password" autocomplete="new-password" minlength="8" maxlength="72" required aria-describedby="error-confirmPassword" placeholder="Re-enter password">
+          <small id="error-confirmPassword" class="field-error" data-error-for="confirmPassword"><%= fieldErrors.confirmPassword || "" %></small>
+        </label>
+      </div>
+    <% } else { %>
+      <div class="form-grid">
+        <label>Register as
+          <select name="role" required aria-describedby="error-role">
+            <option value="STUDENT" <%= (formData.role || "STUDENT") === "STUDENT" ? "selected" : "" %>>Student</option>
+            <option value="TEACHER" <%= formData.role === "TEACHER" ? "selected" : "" %>>Teacher</option>
+          </select>
+          <small id="error-role" class="field-error" data-error-for="role"><%= fieldErrors.role || "" %></small>
+        </label>
+        <label>First name
+          <input name="firstName" value="<%= formData.firstName || "" %>" required minlength="2" maxlength="50" autocomplete="given-name" aria-describedby="error-firstName" placeholder="Enter first name">
+          <small id="error-firstName" class="field-error" data-error-for="firstName"><%= fieldErrors.firstName || "" %></small>
+        </label>
+        <label>Last name
+          <input name="lastName" value="<%= formData.lastName || "" %>" required minlength="2" maxlength="50" autocomplete="family-name" aria-describedby="error-lastName" placeholder="Enter last name">
+          <small id="error-lastName" class="field-error" data-error-for="lastName"><%= fieldErrors.lastName || "" %></small>
+        </label>
+        <label>Email
+          <input name="email" type="email" value="<%= formData.email || "" %>" required maxlength="180" autocomplete="email" aria-describedby="error-email" placeholder="you@example.com">
+          <small id="error-email" class="field-error" data-error-for="email"><%= fieldErrors.email || "" %></small>
+        </label>
+        <label>Indian phone number
+          <input name="phone" type="tel" value="<%= formData.phone || "" %>" required inputmode="numeric" maxlength="10" pattern="[6-9][0-9]{9}" autocomplete="tel-national" aria-describedby="error-phone" placeholder="10-digit mobile number">
+          <small id="error-phone" class="field-error" data-error-for="phone"><%= fieldErrors.phone || "" %></small>
+        </label>
+      </div>
+    <% } %>
+
+    <button class="button primary full" type="submit"><%= pendingOtp ? "Verify and create account" : "Continue to OTP" %></button>
+    <p class="muted center">Already registered? <a href="/login">Login</a></p>
+  </form>
+</section>
+<script>
+  (() => {
+    const form = document.querySelector(".auth-signup-form");
+    if (!form) return;
+
+    const rules = {
+      firstName: (value) => {
+        const name = value.trim();
+        if (name.length < 2 || name.length > 50) return "Use 2–50 characters.";
+        if (!/^[\p{L}\s'-]+$/u.test(name)) return "Use letters, spaces, hyphens, or apostrophes only.";
+        return "";
+      },
+      lastName: (value) => {
+        const name = value.trim();
+        if (name.length < 2 || name.length > 50) return "Use 2–50 characters.";
+        if (!/^[\p{L}\s'-]+$/u.test(name)) return "Use letters, spaces, hyphens, or apostrophes only.";
+        return "";
+      },
+      email: (value) => /^[^\s@]+@[^\s@]+\.[A-Za-z]{2,}$/.test(value.trim()) ? "" : "Enter a valid email address.",
+      phone: (value) => /^[6-9][0-9]{9}$/.test(value.trim()) ? "" : "Enter 10 digits starting with 6–9.",
+      otp: (value) => /^[0-9]{6}$/.test(value) ? "" : "Enter the 6-digit OTP.",
+      password: (value) => {
+        if (value.length < 8) return "Use at least 8 characters.";
+        if (!/[A-Z]/.test(value)) return "Add an uppercase letter.";
+        if (!/[a-z]/.test(value)) return "Add a lowercase letter.";
+        if (!/[0-9]/.test(value)) return "Add a number.";
+        if (!/[^A-Za-z0-9]/.test(value)) return "Add a special character.";
+        if (new TextEncoder().encode(value).length > 72) return "Use at most 72 UTF-8 bytes.";
+        return "";
+      },
+      confirmPassword: (value) => value === form.elements.password.value ? "" : "Passwords do not match."
+    };
+
+    const validate = (input) => {
+      const errorNode = form.querySelector(`[data-error-for="${input.name}"]`);
+      if (!errorNode) return true;
+      let message = "";
+      if (input.required && !input.value.trim()) message = "This field is required.";
+      else if (rules[input.name]) message = rules[input.name](input.value);
+      errorNode.textContent = message;
+      input.setAttribute("aria-invalid", message ? "true" : "false");
+      return !message;
+    };
+
+    form.querySelectorAll("input, select").forEach((input) => {
+      if (input.type === "hidden") return;
+      input.addEventListener("input", () => validate(input));
+      input.addEventListener("change", () => validate(input));
+    });
+    form.addEventListener("submit", (event) => {
+      const valid = [...form.querySelectorAll("input, select")]
+        .filter((input) => input.type !== "hidden")
+        .map(validate)
+        .every(Boolean);
+      if (!valid) {
+        event.preventDefault();
+        form.querySelector('[aria-invalid="true"]')?.focus();
+      }
+    });
+  })();
+</script>
+<%- include("../partials/footer") %>

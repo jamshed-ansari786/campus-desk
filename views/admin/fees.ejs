@@ -1,0 +1,143 @@
+<%- include("../partials/header", { title }) %>
+<div class="admin-shell">
+  <%- include("../partials/admin-sidebar", { activePage: "fees" }) %>
+  <div class="admin-content">
+    <div class="page-heading d-flex justify-content-between align-items-center mb-4">
+      <div>
+        <p class="eyebrow text-uppercase text-primary fw-bold mb-1">FINANCIAL MANAGEMENT</p>
+        <h1 class="h2 mb-1">Course Fee Ledgers</h1>
+        <p class="text-muted mb-0">Manage student course fees, record transactions, and track outstanding balances.</p>
+      </div>
+      <div class="d-flex gap-2">
+        <a href="/admin/reports/fees/excel" class="btn btn-outline-success rounded-pill d-flex align-items-center gap-1">
+          <i class="bi bi-file-earmark-excel"></i> Export Excel
+        </a>
+      </div>
+    </div>
+
+    <!-- Stats summary -->
+    <div class="row g-3 mb-4">
+      <div class="col-md-4">
+        <div class="card shadow-sm border-0 p-3 bg-body rounded-3">
+          <span class="text-muted small">Total Tuition Expected</span>
+          <h3 class="fw-bold my-1 text-primary">$<%= Number(stats.total).toLocaleString() %></h3>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card shadow-sm border-0 p-3 bg-body rounded-3">
+          <span class="text-muted small">Total Collected</span>
+          <h3 class="fw-bold my-1 text-success">$<%= Number(stats.paid).toLocaleString() %></h3>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card shadow-sm border-0 p-3 bg-body rounded-3">
+          <span class="text-muted small">Outstanding Balance</span>
+          <h3 class="fw-bold my-1 text-danger">$<%= Number(stats.outstanding).toLocaleString() %></h3>
+        </div>
+      </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="d-flex gap-2 mb-3">
+      <a href="/admin/fees" class="btn btn-sm <%= statusFilter === 'ALL' ? 'btn-primary' : 'btn-outline-secondary' %> rounded-pill">All</a>
+      <a href="/admin/fees?status=PENDING" class="btn btn-sm <%= statusFilter === 'PENDING' ? 'btn-primary' : 'btn-outline-secondary' %> rounded-pill">Pending</a>
+      <a href="/admin/fees?status=PARTIAL" class="btn btn-sm <%= statusFilter === 'PARTIAL' ? 'btn-primary' : 'btn-outline-secondary' %> rounded-pill">Partial</a>
+      <a href="/admin/fees?status=PAID" class="btn btn-sm <%= statusFilter === 'PAID' ? 'btn-primary' : 'btn-outline-secondary' %> rounded-pill">Paid</a>
+      <a href="/admin/fees?status=OVERDUE" class="btn btn-sm <%= statusFilter === 'OVERDUE' ? 'btn-primary' : 'btn-outline-secondary' %> rounded-pill">Overdue</a>
+    </div>
+
+    <!-- Table of Fees -->
+    <div class="card shadow-sm border-0 rounded-3 bg-body">
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead class="table-light">
+            <tr>
+              <th>Student</th>
+              <th>Course</th>
+              <th>Total Fee</th>
+              <th>Amount Paid</th>
+              <th>Balance</th>
+              <th>Status</th>
+              <th class="text-end">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% if (fees && fees.length) { %>
+              <% fees.forEach(fee => { %>
+                <tr>
+                  <td>
+                    <strong class="d-block"><%= fee.studentId ? fee.studentId.name : "Unknown Student" %></strong>
+                    <small class="text-muted"><%= fee.studentId ? fee.studentId.email : "" %></small>
+                  </td>
+                  <td><%= fee.courseId ? fee.courseId.name : "Unassigned" %></td>
+                  <td>$<%= Number(fee.totalAmount).toLocaleString() %></td>
+                  <td class="text-success fw-bold">$<%= Number(fee.paidAmount).toLocaleString() %></td>
+                  <td class="text-danger fw-bold">$<%= Math.max(0, fee.totalAmount - fee.paidAmount).toLocaleString() %></td>
+                  <td>
+                    <span class="badge <%= fee.status === 'PAID' ? 'bg-success' : fee.status === 'PARTIAL' ? 'bg-warning' : 'bg-danger' %>-subtle text-<%= fee.status === 'PAID' ? 'success' : fee.status === 'PARTIAL' ? 'warning' : 'danger' %>">
+                      <%= fee.status %>
+                    </span>
+                  </td>
+                  <td class="text-end">
+                    <button class="btn btn-sm btn-outline-primary rounded-pill" data-bs-toggle="modal" data-bs-target="#paymentModal_<%= fee._id %>">
+                      <i class="bi bi-credit-card me-1"></i> Record Payment
+                    </button>
+                  </td>
+                </tr>
+
+                <!-- Record Payment Modal -->
+                <div class="modal fade" id="paymentModal_<%= fee._id %>" tabindex="-1">
+                  <div class="modal-dialog">
+                    <div class="modal-content">
+                      <form method="POST" action="/admin/fees/<%= fee._id %>/payment">
+                        <div class="modal-header">
+                          <h5 class="modal-title"><i class="bi bi-cash-stack text-success me-2"></i>Record Fee Payment</h5>
+                          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                          <p class="small text-muted mb-3">Student: <strong><%= fee.studentId?.name %></strong> | Outstanding: <strong class="text-danger">$<%= Math.max(0, fee.totalAmount - fee.paidAmount) %></strong></p>
+                          <div class="mb-3">
+                            <label class="form-label">Payment Amount ($) *</label>
+                            <input type="number" name="amount" class="form-control" required min="1" max="<%= Math.max(1, fee.totalAmount - fee.paidAmount) %>" value="<%= Math.max(0, fee.totalAmount - fee.paidAmount) %>">
+                          </div>
+                          <div class="mb-3">
+                            <label class="form-label">Payment Method *</label>
+                            <select name="paymentMethod" class="form-select">
+                              <option value="ONLINE_RECEIPT">Online Receipt / Transfer</option>
+                              <option value="BANK_TRANSFER">Direct Bank Deposit</option>
+                              <option value="CASH">Cash at Campus Desk</option>
+                              <option value="CHEQUE">Cheque / Demand Draft</option>
+                              <option value="OTHER">Other</option>
+                            </select>
+                          </div>
+                          <div class="mb-3">
+                            <label class="form-label">Transaction / Receipt Reference</label>
+                            <input type="text" name="transactionRef" class="form-control" placeholder="e.g. REC-2026-90412">
+                          </div>
+                          <div class="mb-3">
+                            <label class="form-label">Remarks</label>
+                            <input type="text" name="remarks" class="form-control" placeholder="Term fee instalment">
+                          </div>
+                        </div>
+                        <div class="modal-footer">
+                          <button type="button" class="btn btn-secondary rounded-pill" data-bs-dismiss="modal">Cancel</button>
+                          <button type="submit" class="btn btn-success rounded-pill">Confirm Payment</button>
+                        </div>
+                      </form>
+                    </div>
+                  </div>
+                </div>
+              <% }) %>
+            <% } else { %>
+              <tr>
+                <td colspan="7" class="text-center py-4 text-muted">No fee records found.</td>
+              </tr>
+            <% } %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+<%- include("../partials/footer") %>
+

@@ -1,0 +1,23 @@
+<%- include("../partials/header", { title }) %>
+<div class="admin-shell">
+  <%- include("../partials/admin-sidebar", { activePage: "students" }) %>
+  <div class="admin-content">
+    <div class="page-heading">
+      <div><p class="eyebrow">STUDENT PROFILE</p><h1><%= student.name %></h1><p class="muted">Student ID: <%= student.custom_student_id || student.student_id %></p></div>
+      <div class="actions"><a class="button secondary" href="/admin/students">← Students</a><a class="button primary" href="/admin/students/<%= student.student_id %>/edit">Edit profile</a></div>
+    </div>
+    <section class="profile-strip">
+      <div><span>Email</span><strong><%= student.email %></strong></div>
+      <div><span>Phone</span><strong><%= student.phone || "Not provided" %></strong></div>
+      <div><span>College</span><strong><%= student.college_name %></strong></div>
+      <div><span>Course</span><strong><%= student.course_name %></strong></div>
+      <div><span>Department</span><strong><%= student.department_name %></strong></div>
+      <div><span>Semester</span><strong><%= student.semester_no || "Not provided" %></strong></div>
+      <div><span>Academic year</span><strong><%= student.academic_year || "Not provided" %></strong></div>
+      <div><span>Enrollment date</span><strong><%= student.enrollment_date || "Not provided" %></strong></div>
+      <div><span>Account status</span><strong><%= student.status %></strong></div>
+    </section>
+    <% if (student.profile_image_url) { %><img class="profile-photo" src="<%= student.profile_image_url %>" alt="<%= student.name %> profile image" loading="lazy"><% } %>
+  </div>
+</div>
+<%- include("../partials/footer") %>

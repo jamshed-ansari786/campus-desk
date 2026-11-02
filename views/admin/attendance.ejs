@@ -1,0 +1,79 @@
+<%- include("../partials/header", { title }) %>
+<div class="admin-shell">
+  <%- include("../partials/admin-sidebar", { activePage: "attendance" }) %>
+  <div class="admin-content">
+    <div class="page-heading d-flex justify-content-between align-items-center mb-4">
+      <div>
+        <p class="eyebrow text-uppercase text-primary fw-bold mb-1">ACADEMIC MONITORING</p>
+        <h1 class="h2 mb-1">Campus Attendance</h1>
+        <p class="text-muted mb-0">Overview of student daily attendance logs across all college classes.</p>
+      </div>
+      <div class="d-flex gap-2">
+        <a href="/admin/reports/attendance/excel" class="btn btn-outline-success rounded-pill d-flex align-items-center gap-1">
+          <i class="bi bi-file-earmark-excel"></i> Export Excel
+        </a>
+      </div>
+    </div>
+
+    <!-- Date selector -->
+    <div class="card shadow-sm border-0 p-3 mb-4 bg-body rounded-3">
+      <form method="GET" action="/admin/attendance" class="row g-3 align-items-end">
+        <div class="col-md-4">
+          <label class="form-label small fw-bold">Filter By Date</label>
+          <input type="date" name="date" class="form-control" value="<%= selectedDate %>">
+        </div>
+        <div class="col-md-2">
+          <button type="submit" class="btn btn-primary rounded-pill w-100">Filter Records</button>
+        </div>
+        <div class="col-md-6 text-md-end text-muted small">
+          Showing logs for <strong><%= new Date(selectedDate).toDateString() %></strong>. Total entries today: <strong><%= records.length %></strong>
+        </div>
+      </form>
+    </div>
+
+    <!-- Table of Attendance Records -->
+    <div class="card shadow-sm border-0 rounded-3 bg-body">
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead class="table-light">
+            <tr>
+              <th>Student</th>
+              <th>Subject</th>
+              <th>Marked By</th>
+              <th>Status</th>
+              <th>Remarks</th>
+              <th>Logged At</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% if (records && records.length) { %>
+              <% records.forEach(r => { %>
+                <tr>
+                  <td>
+                    <strong class="d-block"><%= r.studentId ? r.studentId.name : "Student" %></strong>
+                    <small class="text-muted"><%= r.studentId ? r.studentId.studentId || r.studentId.email : "" %></small>
+                  </td>
+                  <td><%= r.semesterSubjectId?.subjectId?.name || "General Course Session" %></td>
+                  <td><%= r.markedByTeacherId ? r.markedByTeacherId.name : "Faculty" %></td>
+                  <td>
+                    <span class="badge <%= r.status === 'PRESENT' ? 'bg-success' : r.status === 'LATE' ? 'bg-warning' : r.status === 'EXCUSED' ? 'bg-info' : 'bg-danger' %>-subtle text-<%= r.status === 'PRESENT' ? 'success' : r.status === 'LATE' ? 'warning' : r.status === 'EXCUSED' ? 'info' : 'danger' %>">
+                      <%= r.status %>
+                    </span>
+                  </td>
+                  <td><%= r.remarks || "-" %></td>
+                  <td><small class="text-secondary"><%= new Date(r.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) %></small></td>
+                </tr>
+              <% }) %>
+            <% } else { %>
+              <tr>
+                <td colspan="6" class="text-center py-4 text-muted">No attendance logs found for this date.</td>
+              </tr>
+            <% } %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+<%- include("../partials/footer") %>
+

@@ -1,0 +1,70 @@
+<%- include("../partials/header", { title }) %>
+<a class="directory-back" href="/colleges">← All universities</a>
+<section class="university-detail panel">
+  <div class="university-detail-heading">
+    <% if (institution.logoUrl) { %>
+      <img class="university-logo university-logo-large" src="<%= institution.logoUrl %>" alt="<%= institution.name %> logo">
+    <% } else { %>
+      <span class="university-mark university-mark-large" aria-hidden="true"><%= institution.name.slice(0, 1) %></span>
+    <% } %>
+    <div>
+      <p class="eyebrow">UNIVERSITY PROFILE</p>
+      <h1><%= institution.name %></h1>
+      <p class="muted"><%= [institution.city, institution.state].filter(Boolean).join(", ") || "Location unavailable" %></p>
+      <% if (institution.officialWebsite) { %>
+        <a class="button primary" href="<%= institution.officialWebsite %>" target="_blank" rel="noopener noreferrer">Visit official website ↗</a>
+      <% } %>
+    </div>
+  </div>
+  <% if (institution.campusImageUrl) { %>
+    <img class="university-campus-image" src="<%= institution.campusImageUrl %>" alt="Campus of <%= institution.name %>" loading="lazy">
+  <% } else { %>
+    <p class="source-note">A campus image is not shown because a permitted, attributable official image source was not verified.</p>
+  <% } %>
+  <section class="university-description">
+    <h2>About this institution</h2>
+    <p><%= institution.description || "An institution description was not available in the reviewed official sources." %></p>
+    <dl class="institution-facts">
+      <div><dt>Public contact phone</dt><dd><%= institution.publicPhone || "Unavailable in the reviewed sources" %></dd></div>
+      <div><dt>Public contact email</dt><dd><%= institution.publicEmail || "Unavailable in the reviewed sources" %></dd></div>
+      <div><dt>Official website</dt><dd><% if (institution.officialWebsite) { %><a href="<%= institution.officialWebsite %>" target="_blank" rel="noopener noreferrer"><%= institution.officialWebsite %></a><% } else { %>Unavailable<% } %></dd></div>
+    </dl>
+  </section>
+  <section class="university-programs">
+    <h2>Departments verified from official sources</h2>
+    <% if (institution.departments && institution.departments.length) { %>
+      <ul>
+        <% institution.departments.forEach(department => { %>
+          <li><span><%= department.name %></span><a href="<%= department.sourceUrl %>" target="_blank" rel="noopener noreferrer">Official department source ↗</a></li>
+        <% }) %>
+      </ul>
+    <% } else { %>
+      <p class="muted">No department names have been verified from the reviewed official sources yet.</p>
+    <% } %>
+  </section>
+  <section class="university-programs">
+    <h2>Programs verified from official sources</h2>
+    <% if (institution.programs && institution.programs.length) { %>
+      <ul>
+        <% institution.programs.forEach(program => { %>
+          <li><span><%= program.name %></span><a href="<%= program.sourceUrl %>" target="_blank" rel="noopener noreferrer">Official program source ↗</a></li>
+        <% }) %>
+      </ul>
+    <% } else { %>
+      <p class="muted">No specific programs have been verified for this university yet.</p>
+    <% } %>
+  </section>
+  <section class="university-sources">
+    <h2>Sources</h2>
+    <% if (institution.sources && institution.sources.length) { %>
+      <ul>
+        <% institution.sources.forEach(source => { %>
+          <li><a href="<%= source %>" target="_blank" rel="noopener noreferrer"><%= source %></a></li>
+        <% }) %>
+      </ul>
+    <% } else { %>
+      <p class="muted">No source links are available for this profile.</p>
+    <% } %>
+  </section>
+</section>
+<%- include("../partials/footer") %>

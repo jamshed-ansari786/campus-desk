@@ -1,0 +1,26 @@
+<%- include("../partials/header", { title }) %>
+<div class="admin-shell">
+  <%- include("../partials/admin-sidebar", { activePage: "teachers" }) %>
+  <div class="admin-content">
+    <div class="page-heading">
+      <div><p class="eyebrow">TEACHER PROFILE</p><h1><%= teacher.name %></h1><p class="muted">Teacher ID: <%= teacher.custom_teacher_id || teacher.teacher_id %></p></div>
+      <div class="actions"><a class="button secondary" href="/admin/teachers">← Teachers</a><a class="button primary" href="/admin/teachers/<%= teacher.teacher_id %>/edit">Edit profile</a></div>
+    </div>
+    <section class="profile-strip">
+      <div><span>Email</span><strong><%= teacher.email %></strong></div>
+      <div><span>Phone</span><strong><%= teacher.phone || "Not provided" %></strong></div>
+      <div><span>College</span><strong><%= teacher.college_name %></strong></div>
+      <div><span>Department</span><strong><%= teacher.department_name %></strong></div>
+      <div><span>Designation</span><strong><%= teacher.designation || "Not provided" %></strong></div>
+      <div><span>Specialization</span><strong><%= teacher.specialization || "Not provided" %></strong></div>
+      <div><span>Skills</span><strong><%= teacher.skills || "Not provided" %></strong></div>
+      <div><span>Account status</span><strong><%= teacher.status %></strong></div>
+    </section>
+    <section class="panel">
+      <h2>Assigned courses</h2>
+      <% if (teacher.assigned_courses.length) { %><ul><% teacher.assigned_courses.forEach(course => { %><li><%= course %></li><% }) %></ul><% } else { %><p class="muted">No courses are assigned.</p><% } %>
+    </section>
+    <% if (teacher.profile_image_url) { %><img class="profile-photo" src="<%= teacher.profile_image_url %>" alt="<%= teacher.name %> profile image" loading="lazy"><% } %>
+  </div>
+</div>
+<%- include("../partials/footer") %>

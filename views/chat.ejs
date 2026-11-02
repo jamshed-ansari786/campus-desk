@@ -1,0 +1,423 @@
+<%- include("partials/header", { title }) %>
+<div class="container-fluid py-4" style="max-width: 1200px;">
+  <div class="card shadow-sm border-0 rounded-4 overflow-hidden bg-body" style="height: 75vh; min-height: 550px;">
+    <div class="row g-0 h-100">
+      
+      <!-- Left Column: Contact List -->
+      <div class="col-12 col-md-4 col-lg-4 border-end h-100 d-flex flex-column bg-body-tertiary">
+        <div class="p-3 border-bottom bg-body">
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <h5 class="fw-bold mb-0"><i class="bi bi-chat-dots-fill text-primary me-2"></i>Messages</h5>
+            <span class="badge bg-primary-subtle text-primary rounded-pill" id="activeRoleBadge"><%= currentUser.role %></span>
+          </div>
+          <!-- Contact search -->
+          <div class="input-group input-group-sm">
+            <span class="input-group-text bg-body border-end-0"><i class="bi bi-search text-muted"></i></span>
+            <input type="text" id="contactSearchInput" class="form-control bg-body border-start-0" placeholder="Search contacts...">
+          </div>
+        </div>
+
+        <!-- Contacts scrollable list -->
+        <div class="flex-grow-1 overflow-y-auto" id="contactsListContainer">
+          <div class="p-4 text-center text-muted small" id="contactsLoading">
+            <div class="spinner-border spinner-border-sm text-primary mb-2" role="status"></div>
+            <div>Loading permitted contacts...</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Column: Active Conversation -->
+      <div class="col-12 col-md-8 col-lg-8 h-100 d-flex flex-column bg-body">
+        
+        <!-- Header: Selected contact info -->
+        <div class="p-3 border-bottom d-flex justify-content-between align-items-center bg-body" id="chatHeader" style="display: none !important;">
+          <div class="d-flex align-items-center gap-2">
+            <div class="position-relative">
+              <div class="rounded-circle bg-primary text-white fw-bold d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;" id="headerAvatar">?</div>
+              <span class="position-absolute bottom-0 end-0 p-1 bg-secondary border border-light rounded-circle" id="headerOnlineDot"></span>
+            </div>
+            <div>
+              <h6 class="fw-bold mb-0" id="headerName">Select a Contact</h6>
+              <small class="text-muted" id="headerSub">Offline</small>
+            </div>
+          </div>
+
+          <!-- Message search in conversation -->
+          <div class="input-group input-group-sm w-auto">
+            <input type="text" id="messageSearchInput" class="form-control" placeholder="Search in chat...">
+            <button class="btn btn-outline-secondary" type="button" id="messageSearchBtn"><i class="bi bi-search"></i></button>
+          </div>
+        </div>
+
+        <!-- Messages stream container -->
+        <div class="flex-grow-1 p-3 overflow-y-auto d-flex flex-column gap-2" id="messagesContainer">
+          <!-- Placeholder when no conversation is selected -->
+          <div class="my-auto text-center text-muted p-4" id="emptyChatPlaceholder">
+            <i class="bi bi-chat-square-quote text-primary" style="font-size: 3.5rem;"></i>
+            <h5 class="fw-bold mt-3 mb-1">Your Direct Communications</h5>
+            <p class="small text-muted">Select an authorized contact on the left to start a real-time private conversation.</p>
+          </div>
+        </div>
+
+        <!-- Typing status indicator -->
+        <div class="px-3 py-1 small text-muted fst-italic" id="typingIndicator" style="display: none; height: 24px;"></div>
+
+        <!-- Input message form -->
+        <div class="p-3 border-top bg-body" id="chatInputArea" style="display: none;">
+          <form id="sendMessageForm" class="d-flex align-items-center gap-2 m-0">
+            <input type="text" id="messageInput" class="form-control rounded-pill px-3" placeholder="Type your message here..." autocomplete="off" required>
+            <button type="submit" class="btn btn-primary rounded-circle d-flex align-items-center justify-content-center p-2" style="width: 42px; height: 42px;" title="Send Message">
+              <i class="bi bi-send-fill"></i>
+            </button>
+          </form>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  const currentUserId = "<%= currentUser.id %>";
+  const currentUserRole = "<%= currentUser.role %>";
+  const currentUserName = "<%= currentUser.name %>";
+
+  let contacts = [];
+  let selectedContact = null;
+  let conversationId = null;
+  let typingTimeout = null;
+
+  const socket = window.getCampusSocket
+    ? window.getCampusSocket()
+    : (typeof io !== "undefined"
+        ? io({
+            transports: ["websocket", "polling"],
+            reconnection: true,
+            reconnectionAttempts: Infinity,
+            reconnectionDelay: 1000,
+          })
+        : null);
+
+  // DOM elements
+  const contactsListContainer = document.getElementById("contactsListContainer");
+  const contactSearchInput = document.getElementById("contactSearchInput");
+  const chatHeader = document.getElementById("chatHeader");
+  const headerAvatar = document.getElementById("headerAvatar");
+  const headerOnlineDot = document.getElementById("headerOnlineDot");
+  const headerName = document.getElementById("headerName");
+  const headerSub = document.getElementById("headerSub");
+  const emptyChatPlaceholder = document.getElementById("emptyChatPlaceholder");
+  const messagesContainer = document.getElementById("messagesContainer");
+  const chatInputArea = document.getElementById("chatInputArea");
+  const sendMessageForm = document.getElementById("sendMessageForm");
+  const messageInput = document.getElementById("messageInput");
+  const typingIndicator = document.getElementById("typingIndicator");
+  const messageSearchInput = document.getElementById("messageSearchInput");
+  const messageSearchBtn = document.getElementById("messageSearchBtn");
+
+  // Load Contacts
+  loadContacts();
+
+  async function loadContacts() {
+    try {
+      const res = await fetch("/api/chat/contacts");
+      if (!res.ok) throw new Error("Could not fetch contacts");
+      const data = await res.json();
+      contacts = data.contacts || [];
+      renderContacts(contacts);
+    } catch (err) {
+      contactsListContainer.innerHTML = `<div class="p-4 text-center text-danger small">Error loading contacts: ${err.message}</div>`;
+    }
+  }
+
+  function renderContacts(list) {
+    if (!list.length) {
+      contactsListContainer.innerHTML = `<div class="p-4 text-center text-muted small">No permitted contacts available.</div>`;
+      return;
+    }
+
+    contactsListContainer.innerHTML = list.map(c => `
+      <div class="contact-item p-3 border-bottom d-flex align-items-center gap-3 cursor-pointer ${selectedContact && selectedContact._id === c._id ? 'bg-primary-subtle' : ''}" data-id="${c._id}" style="cursor: pointer;">
+        <div class="position-relative">
+          <div class="rounded-circle bg-secondary text-white fw-bold d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+            ${(c.name || 'U').charAt(0)}
+          </div>
+          <span class="position-absolute bottom-0 end-0 p-1 rounded-circle border border-light ${c.isOnline ? 'bg-success' : 'bg-secondary'}" id="statusDot_${c._id}"></span>
+        </div>
+        <div class="flex-grow-1 overflow-hidden">
+          <div class="d-flex justify-content-between align-items-center">
+            <strong class="d-block text-truncate small">${escapeHtml(c.name)}</strong>
+            <span class="badge ${c.unreadCount > 0 ? 'bg-danger' : 'd-none'} rounded-pill" id="unread_${c._id}">${c.unreadCount}</span>
+          </div>
+          <div class="text-muted text-truncate" style="font-size: 0.75rem;">${c.role} · ${c.identifier || ''}</div>
+        </div>
+      </div>
+    `).join("");
+
+    // Attach click events
+    document.querySelectorAll(".contact-item").forEach(item => {
+      item.addEventListener("click", () => {
+        const id = item.getAttribute("data-id");
+        const found = contacts.find(c => String(c._id) === id);
+        if (found) selectContact(found);
+      });
+    });
+  }
+
+  // Filter contacts
+  contactSearchInput.addEventListener("input", (e) => {
+    const q = e.target.value.toLowerCase().trim();
+    const filtered = contacts.filter(c => c.name.toLowerCase().includes(q) || c.email.toLowerCase().includes(q));
+    renderContacts(filtered);
+  });
+
+  // Select Contact
+  async function selectContact(contact) {
+    selectedContact = contact;
+    renderContacts(contacts); // Refresh active highlight
+
+    // Show header & input
+    chatHeader.style.setProperty("display", "flex", "important");
+    chatInputArea.style.display = "block";
+    emptyChatPlaceholder.style.display = "none";
+
+    headerAvatar.textContent = (contact.name || 'U').charAt(0);
+    headerName.textContent = contact.name;
+    headerSub.textContent = `${contact.role} · ${contact.isOnline ? 'Online' : 'Offline'}`;
+    headerOnlineDot.className = `position-absolute bottom-0 end-0 p-1 rounded-circle border border-light ${contact.isOnline ? 'bg-success' : 'bg-secondary'}`;
+
+    // Reset unread count locally
+    contact.unreadCount = 0;
+    const badge = document.getElementById(`unread_${contact._id}`);
+    if (badge) badge.className = "badge d-none";
+
+    // Load Messages
+    await loadMessages(contact._id);
+
+    // Notify socket to mark read
+    if (socket && conversationId) {
+      socket.emit("mark_read", { conversationId });
+    }
+  }
+
+  async function loadMessages(recipientId, searchQuery = "") {
+    messagesContainer.innerHTML = `
+      <div class="my-auto text-center text-muted small">
+        <div class="spinner-border spinner-border-sm text-primary mb-2"></div>
+        <div>Loading conversation...</div>
+      </div>
+    `;
+
+    try {
+      const url = `/api/chat/messages/${recipientId}${searchQuery ? `?q=${encodeURIComponent(searchQuery)}` : ''}`;
+      const res = await fetch(url);
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || "Failed to load messages");
+      }
+      const data = await res.json();
+      conversationId = data.conversationId;
+      renderMessages(data.messages || []);
+    } catch (err) {
+      messagesContainer.innerHTML = `<div class="my-auto text-center text-danger small">${err.message}</div>`;
+    }
+  }
+
+  function renderMessages(messages) {
+    if (!messages.length) {
+      messagesContainer.innerHTML = `
+        <div class="my-auto text-center text-muted small p-4">
+          <i class="bi bi-chat-heart text-secondary fs-2 d-block mb-2"></i>
+          <div>No messages yet. Say hello to start the conversation!</div>
+        </div>
+      `;
+      return;
+    }
+
+    messagesContainer.innerHTML = messages.map(m => {
+      const isMe = String(m.senderId) === String(currentUserId);
+      return `
+        <div class="d-flex flex-column ${isMe ? 'align-items-end' : 'align-items-start'}">
+          <div class="p-2 px-3 rounded-4 shadow-sm ${isMe ? 'bg-primary text-white' : 'bg-light text-dark'}" style="max-width: 75%; word-break: break-word;">
+            <div>${escapeHtml(m.content)}</div>
+            <div class="text-end ${isMe ? 'text-white-50' : 'text-secondary'}" style="font-size: 0.68rem; margin-top: 2px;">
+              ${new Date(m.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+              ${isMe ? '<i class="bi bi-check2-all ms-1"></i>' : ''}
+            </div>
+          </div>
+        </div>
+      `;
+    }).join("");
+
+    scrollToBottom();
+  }
+
+  function scrollToBottom() {
+    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+  }
+
+  // Send Message
+  sendMessageForm.addEventListener("submit", (e) => {
+    e.preventDefault();
+    if (!selectedContact) return;
+
+    const content = messageInput.value.trim();
+    if (!content) return;
+
+    if (socket) {
+      socket.emit("send_message", {
+        recipientId: selectedContact._id,
+        content: content,
+      }, (res) => {
+        if (res && res.error) {
+          alert(res.error);
+        }
+      });
+    }
+
+    // Stop typing
+    if (socket && selectedContact) {
+      socket.emit("stop_typing", { recipientId: selectedContact._id, conversationId });
+    }
+
+    messageInput.value = "";
+  });
+
+  // Typing tracking
+  messageInput.addEventListener("input", () => {
+    if (!socket || !selectedContact) return;
+
+    socket.emit("typing", { recipientId: selectedContact._id, conversationId });
+
+    clearTimeout(typingTimeout);
+    typingTimeout = setTimeout(() => {
+      socket.emit("stop_typing", { recipientId: selectedContact._id, conversationId });
+    }, 2000);
+  });
+
+  // Message search in conversation
+  messageSearchBtn.addEventListener("click", () => {
+    if (!selectedContact) return;
+    loadMessages(selectedContact._id, messageSearchInput.value.trim());
+  });
+
+  messageSearchInput.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      if (!selectedContact) return;
+      loadMessages(selectedContact._id, messageSearchInput.value.trim());
+    }
+  });
+
+  // Socket Events
+  if (socket) {
+    socket.on("connect_error", (error) => {
+      console.warn("[Chat] Socket connection error:", error.message);
+      if (error.message === "xhr poll error" || error.description === 400) {
+        socket.io.opts.transports = ["websocket", "polling"];
+      }
+    });
+
+    // New incoming message
+    socket.on("new_message", (msg) => {
+      const isCurrentChat = selectedContact && (
+        String(msg.senderId) === String(selectedContact._id) ||
+        String(msg.recipientId) === String(selectedContact._id)
+      );
+
+      if (isCurrentChat) {
+        // Append message
+        const isMe = String(msg.senderId) === String(currentUserId);
+        const el = document.createElement("div");
+        el.className = `d-flex flex-column ${isMe ? 'align-items-end' : 'align-items-start'}`;
+        el.innerHTML = `
+          <div class="p-2 px-3 rounded-4 shadow-sm ${isMe ? 'bg-primary text-white' : 'bg-light text-dark'}" style="max-width: 75%; word-break: break-word;">
+            <div>${escapeHtml(msg.content)}</div>
+            <div class="text-end ${isMe ? 'text-white-50' : 'text-secondary'}" style="font-size: 0.68rem; margin-top: 2px;">
+              ${new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+              ${isMe ? '<i class="bi bi-check2-all ms-1"></i>' : ''}
+            </div>
+          </div>
+        `;
+        messagesContainer.appendChild(el);
+        scrollToBottom();
+
+        // Mark as read
+        if (!isMe && conversationId) {
+          socket.emit("mark_read", { conversationId });
+        }
+      } else {
+        // Increment unread count for other contact
+        const contact = contacts.find(c => String(c._id) === String(msg.senderId));
+        if (contact) {
+          contact.unreadCount = (contact.unreadCount || 0) + 1;
+          const badge = document.getElementById(`unread_${contact._id}`);
+          if (badge) {
+            badge.textContent = contact.unreadCount;
+            badge.className = "badge bg-danger rounded-pill";
+          }
+        }
+      }
+    });
+
+    // Online users status update
+    socket.on("user_status", (data) => {
+      const contact = contacts.find(c => String(c._id) === String(data.userId));
+      if (contact) {
+        contact.isOnline = data.status === "online";
+        const dot = document.getElementById(`statusDot_${contact._id}`);
+        if (dot) dot.className = `position-absolute bottom-0 end-0 p-1 rounded-circle border border-light ${contact.isOnline ? 'bg-success' : 'bg-secondary'}`;
+        if (selectedContact && String(selectedContact._id) === String(contact._id)) {
+          headerSub.textContent = `${contact.role} · ${contact.isOnline ? 'Online' : 'Offline'}`;
+          headerOnlineDot.className = `position-absolute bottom-0 end-0 p-1 rounded-circle border border-light ${contact.isOnline ? 'bg-success' : 'bg-secondary'}`;
+        }
+      }
+    });
+
+    socket.on("online_users", (userIds) => {
+      const set = new Set(userIds);
+      contacts.forEach(c => {
+        c.isOnline = set.has(String(c._id));
+      });
+      renderContacts(contacts);
+    });
+
+    // Typing indicators
+    socket.on("user_typing", (data) => {
+      if (selectedContact && String(data.senderId) === String(selectedContact._id)) {
+        typingIndicator.textContent = `${data.senderName} is typing...`;
+        typingIndicator.style.display = "block";
+      }
+    });
+
+    socket.on("user_stop_typing", (data) => {
+      if (selectedContact && String(data.senderId) === String(selectedContact._id)) {
+        typingIndicator.style.display = "none";
+      }
+    });
+
+    // Read receipts
+    socket.on("messages_read", (data) => {
+      if (conversationId && String(data.conversationId) === String(conversationId)) {
+        // Visual indicator that recipient read our messages
+      }
+    });
+
+    socket.on("chat_error", (data) => {
+      alert(data.error || "Chat operation failed.");
+    });
+  }
+
+  function escapeHtml(str) {
+    return String(str || "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;");
+  }
+});
+</script>
+
+<%- include("partials/footer") %>
+

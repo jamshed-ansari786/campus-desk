@@ -1,0 +1,33 @@
+<%- include("../partials/header", { title }) %>
+<div class="admin-shell">
+  <%- include("../partials/admin-sidebar", { activePage: "colleges" }) %>
+  <div class="admin-content">
+    <div class="page-heading"><div><p class="eyebrow">CAMPUS DIRECTORY</p><h1>Colleges</h1><p class="muted">Manage affiliated colleges without changing their university directory profiles.</p></div></div>
+    <% if (currentUser.adminRole === "SUPER_ADMIN") { %>
+      <form class="panel form-grid" method="POST" action="/admin/colleges">
+        <h2 class="span-two">Add a college</h2>
+        <label>University<select name="university_id" required><option value="">Select a university</option><% universities.forEach(item => { %><option value="<%= item._id %>"><%= item.name %></option><% }) %></select></label>
+        <label>College name<input name="name" required maxlength="160"></label>
+        <label>City<input name="city" maxlength="100"></label>
+        <label>State<input name="state" maxlength="100"></label>
+        <label>Official website<input type="url" name="website" maxlength="500"></label>
+        <label>Public contact phone<input type="tel" name="phone" maxlength="40"></label>
+        <label>Public contact email<input type="email" name="email" maxlength="180"></label>
+        <button class="button primary span-two" type="submit">Add college</button>
+      </form>
+    <% } %>
+    <section class="panel">
+      <h2>Active colleges <span class="count"><%= colleges.length %></span></h2>
+      <div class="table-wrap"><table><thead><tr><th>College details</th><th>University</th><th>Location and contact</th><th>Actions</th></tr></thead><tbody>
+        <% colleges.forEach(item => { const formId = `college-update-${item._id}`; %><tr>
+          <td><input form="<%= formId %>" name="name" required maxlength="160" value="<%= item.name %>" aria-label="College name"><input form="<%= formId %>" type="url" name="website" maxlength="500" value="<%= item.website || '' %>" placeholder="Official website" aria-label="Official website"></td>
+          <td><strong><%= item.universityId?.name || "—" %></strong></td>
+          <td><input form="<%= formId %>" name="city" maxlength="100" value="<%= item.city || '' %>" placeholder="City" aria-label="City"><input form="<%= formId %>" name="state" maxlength="100" value="<%= item.state || '' %>" placeholder="State" aria-label="State"><input form="<%= formId %>" type="tel" name="phone" maxlength="40" value="<%= item.phone || '' %>" placeholder="Public phone" aria-label="Public phone"><input form="<%= formId %>" type="email" name="email" maxlength="180" value="<%= item.email || '' %>" placeholder="Public email" aria-label="Public email"></td>
+          <td><div class="decision"><form id="<%= formId %>" method="POST" action="/admin/colleges/<%= item._id %>/update"><button class="button tiny secondary" type="submit">Save</button></form><% if (currentUser.adminRole === "SUPER_ADMIN") { %><form method="POST" action="/admin/colleges/<%= item._id %>/archive" onsubmit="return confirm('Archive this college? Linked academic history will be preserved.')"><button class="button tiny danger" type="submit">Archive</button></form><% } %></div></td>
+        </tr><% }) %>
+        <% if (!colleges.length) { %><tr><td colspan="4">No active colleges were found.</td></tr><% } %>
+      </tbody></table></div>
+    </section>
+  </div>
+</div>
+<%- include("../partials/footer") %>

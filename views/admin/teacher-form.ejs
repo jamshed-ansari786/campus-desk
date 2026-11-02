@@ -1,0 +1,32 @@
+<%- include("../partials/header", { title }) %>
+<div class="admin-shell">
+  <%- include("../partials/admin-sidebar", { activePage: "teachers" }) %>
+  <div class="admin-content">
+    <div class="page-heading">
+      <div><p class="eyebrow">TEACHER RECORD</p><h1><%= teacher ? "Edit teacher" : "Add teacher" %></h1><p class="muted">Manage contact, department, specialization, and course assignments.</p></div>
+      <a class="button secondary" href="/admin/teachers">← Teachers</a>
+    </div>
+    <form class="panel" method="POST" action="<%= teacher ? `/admin/teachers/${teacher.teacher_id}/update` : `/admin/teachers` %>">
+      <div class="form-grid">
+        <label>Full name<input name="name" required maxlength="120" value="<%= teacher ? teacher.name : '' %>"></label>
+        <label>Email<input type="email" name="email" required maxlength="180" value="<%= teacher ? teacher.email : '' %>"></label>
+        <label>Teacher ID<input name="teacher_id" maxlength="80" value="<%= teacher ? teacher.custom_teacher_id : '' %>"></label>
+        <label>Phone number<input type="tel" name="phone" maxlength="40" value="<%= teacher ? teacher.phone : '' %>"></label>
+        <label>College<select name="college_id" required <%= currentUser.adminRole === "COLLEGE_ADMIN" ? "disabled" : "" %>><% colleges.forEach(item => { %><option value="<%= item._id %>" <%= teacher && teacher.college_id === String(item._id) ? "selected" : "" %>><%= item.name %></option><% }) %></select></label>
+        <% if (currentUser.adminRole === "COLLEGE_ADMIN") { %><input type="hidden" name="college_id" value="<%= currentUser.collegeId %>"><% } %>
+        <label>Department<select name="department_id"><option value="">Not specified</option><% departments.forEach(item => { %><option value="<%= item._id %>" <%= teacher && teacher.department_id === String(item._id) ? "selected" : "" %>><%= item.name %></option><% }) %></select></label>
+        <label>Designation<input name="designation" maxlength="120" value="<%= teacher ? teacher.designation : '' %>" placeholder="e.g. Assistant Professor"></label>
+        <label>Subject specialization<input name="specialization" maxlength="160" value="<%= teacher ? teacher.specialization : '' %>"></label>
+        <label>Skills (comma separated)<input name="skills" value="<%= teacher ? teacher.skills : '' %>" placeholder="e.g. Databases, Web development"></label>
+        <label class="span-two">Assigned courses<select name="course_ids" multiple size="5"><% courses.forEach(item => { %><option value="<%= item._id %>" <%= teacher && teacher.assigned_course_ids.includes(String(item._id)) ? "selected" : "" %>><%= item.name %><%= item.code ? ` (${item.code})` : "" %></option><% }) %></select><small>Hold Ctrl (Windows) or Command (Mac) to select more than one.</small></label>
+        <label class="span-two">Profile image URL<input type="url" name="profile_image_url" maxlength="500" value="<%= teacher ? teacher.profile_image_url : '' %>" placeholder="Optional public image URL"></label>
+        <% if (!teacher) { %>
+          <label>Login username<input name="username" required minlength="3" maxlength="40" autocomplete="off"></label>
+          <label>Temporary password<input type="password" name="password" required minlength="8" maxlength="72" autocomplete="new-password"><small>Use 8–72 UTF-8 bytes.</small></label>
+        <% } %>
+      </div>
+      <button class="button primary" type="submit"><%= teacher ? "Save teacher" : "Create teacher and login" %></button>
+    </form>
+  </div>
+</div>
+<%- include("../partials/footer") %>
