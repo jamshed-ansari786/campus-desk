@@ -17,6 +17,46 @@ A learning-focused college management application built with Node.js, Express, E
 - Login history is stored separately in the `LoginActivity` model; passwords are hashed with bcrypt.
 - Role-based route access, flash messages, and responsive EJS/CSS pages.
 
+## Technologies
+
+| Area | Technologies |
+| --- | --- |
+| Runtime and server | Node.js, Express |
+| Frontend | EJS templates, HTML, CSS, browser-side JavaScript |
+| Database | MongoDB, Mongoose |
+| Authentication and sessions | `express-session`, `bcryptjs`, JSON Web Tokens |
+| Real-time features | Socket.IO for chat and notifications |
+| Reports | ExcelJS (spreadsheets), PDFKit (PDFs) |
+| Testing | Node.js test runner with Supertest, Playwright for end-to-end tests |
+
+Express renders the frontend and serves static assets from the same origin; there is no separate frontend application or API server.
+
+## Project flow
+
+1. The browser requests a page or submits a form to the Express application.
+2. Express parses the request, serves static files when applicable, sanitizes request data, and loads the user's session and flash messages.
+3. The mounted route handles the request. Authentication and role middleware protect restricted pages and actions, and route handlers validate submitted data.
+4. Route handlers read or update MongoDB through the Mongoose models.
+5. Express returns a rendered EJS page, a redirect with a flash message, or JSON for endpoints such as `/health`.
+6. Chat and notification events use Socket.IO on the same HTTP server and share the Express session middleware.
+
+## Architecture
+
+CampusDesk is a server-rendered, layered Express application. Routes coordinate requests and responses, middleware handles shared concerns such as sessions and authorization, Mongoose models define persisted data, and EJS views render the user interface.
+
+| Path | Responsibility |
+| --- | --- |
+| `server.js` | Application entry point; configures Express, middleware, Socket.IO, routes, error handling, database startup, and the HTTP listener |
+| `config/db.js` | Connects to MongoDB through Mongoose |
+| `routes/` | Authentication, public university directory, admin, student, teacher, chat, notification, and admin API handlers |
+| `middleware/` | Authentication and role checks, flash messages, request sanitization, and rate limiting |
+| `models/index.js` | Mongoose schemas and models for accounts, academic records, directory data, and activity |
+| `services/` | Socket.IO initialization and report generation |
+| `views/` | EJS pages and shared partials for the public site and role-specific dashboards |
+| `public/` | Browser JavaScript and shared CSS served by Express |
+| `scripts/` | Database seeding and the explicit admin password-reset command |
+| `tests/` | API/integration tests and Playwright end-to-end tests |
+
 ## Requirements
 
 1. Node.js LTS
@@ -94,20 +134,9 @@ Schema additions are optional where they apply to existing student, teacher, cou
 
 Public signup creates student and teacher accounts only; admin roles cannot be selected during signup or student/teacher login. Signup validates names, email, Indian mobile numbers, OTP, and password on both the browser and server. The OTP expires after five minutes and is limited to five attempts per signup session, with a five-minute lockout after the limit is reached. In local development, the OTP is displayed in the signup page because this project has no configured email/SMS provider; configure an OTP delivery provider before enabling public signup in production. Forgot-password requests are available from both login pages. Reset codes are shown only in non-production environments, expire after five minutes, and are limited to five attempts; production password reset returns an explicit unavailable response until email delivery is configured and integrated. Successful signup logs the user in and opens the corresponding dashboard. Student signup does not require a pre-existing college/course assignment; the account dashboard remains usable and displays that academic placement is pending until an administrator assigns it.
 
-## Main folders
-
-```text
-config/                 MongoDB connection
-middleware/             Authentication and flash messages
-models/                 Mongoose schemas
-public/css/style.css    Shared styles and theme tokens
-routes/                 Express authentication, admin, student, teacher, and directory routes
-scripts/seed.js         Idempotent demo and sourced directory seed data
-views/                  EJS pages and shared partials
-```
-
 ## Important production considerations
 
 This remains a learning project, not a fully security-audited production service. Before using real student data, configure a persistent Express session store, add CSRF protection and rate limiting, use HTTPS, rotate secrets, and define institutional privacy/retention policies. Profile image fields accept URLs; only use images you are authorized to display.
 #   c a m p u s - d e s k  
+ #   c a m p u s - d e s k  
  
